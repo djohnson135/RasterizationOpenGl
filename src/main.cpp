@@ -40,9 +40,10 @@ float eyeDistance = 5.0f;
 int textureMode = 0;
 int colorMode = 0;
 float angle = 0;
-
+bool isColorSet = false;
 std::string mainName = "Assignment3 - Dathan Johnson";
-
+float minimumZ = 0;
+float maximumZ = 0;
 int texWidth, texHeight;
 
 GLuint texID;
@@ -52,19 +53,132 @@ void ClearFrameBuffer()
 	memset(&color[0][0][0], 0.0f, sizeof(float) * WINDOW_WIDTH * WINDOW_HEIGHT * 3);
 }
 
+
+float maxZ() {
+	auto max = max_element(triangleVector.begin(), triangleVector.end(), [](Triangle  lhs, Triangle  rhs) {
+		return (lhs.maxZ() < rhs.maxZ());
+		});
+	return max->maxZ();
+}
+
+float minZ() {
+	auto max = min_element(triangleVector.begin(), triangleVector.end(), [](Triangle  lhs, Triangle  rhs) {
+		return (lhs.minZ() < rhs.minZ());
+		});
+	return max->minZ();
+}
+
+//void maxMinZ() {
+//	float max = triangleVector[0].maxZ();
+//	float min = triangleVector[0].minZ();
+//	for (int i = 1; i < triangleVector.size(); i++)
+//	{
+//		// if the current element is greater than the maximum found so far
+//		if (triangleVector[i].maxZ() > max) {
+//			max = triangleVector[i].maxZ();
+//		}
+//
+//		// if the current element is smaller than the minimum found so far
+//		else if (triangleVector[i].minZ() < min) {
+//			min = triangleVector[i].minZ();
+//		}
+//	}
+//	minimumZ = min;
+//	maximumZ = max;
+//}
+
+
+std::vector<glm::vec3> randColorTriangle() {
+	
+	std::vector<glm::vec3> triangleColor{
+		glm::vec3(0.0f, 0.0f, 0.0f),
+		glm::vec3(0.0f, 0.0f, 0.0f),
+		glm::vec3(0.0f, 0.0f, 0.0f)
+	};
+
+	float r = (float)rand() / RAND_MAX;
+	float g = (float)rand() / RAND_MAX;
+	float b = (float)rand() / RAND_MAX;
+
+	for (auto & iter : triangleColor) {
+		iter.x = r;
+		iter.y = g;
+		iter.z = b;
+	}
+	return triangleColor;
+}
+
+
+std::vector<glm::vec3> randColorVertex() {
+
+	std::vector<glm::vec3> triangleColor{
+		glm::vec3(0.0f, 0.0f, 0.0f),
+		glm::vec3(0.0f, 0.0f, 0.0f),
+		glm::vec3(0.0f, 0.0f, 0.0f)
+	};
+
+	for (auto& iter : triangleColor) {
+		iter.x = (float)rand() / RAND_MAX;
+		iter.y = (float)rand() / RAND_MAX;
+		iter.z = (float)rand() / RAND_MAX;
+	}
+	return triangleColor;
+}
+
+std::vector<glm::vec3> zValueColor(float z0, float z1, float z2) {
+
+	std::vector<glm::vec3> triangleColor{
+		glm::vec3(1.0f, 0.0f, 0.0f),
+		glm::vec3(1.0f, 0.0f, 0.0f),
+		glm::vec3(1.0f, 0.0f, 0.0f)
+	};
+
+	float range = maximumZ - minimumZ;
+	triangleColor[0].r = (z0 - minimumZ) / range;
+	triangleColor[1].r = (z1 - minimumZ) / range;
+	triangleColor[2].r = (z2 - minimumZ) / range;
+
+	return triangleColor;
+}
+
+std::vector<glm::vec3> setTriangleColor(glm::vec3 * trianlge_vertex) {
+	
+	switch (colorMode) {
+	case 0:
+		return randColorTriangle();
+		break;
+	case 1:
+		return randColorVertex();
+		break;
+	case 2:
+		return zValueColor(trianlge_vertex++->z, trianlge_vertex++->z, trianlge_vertex->z);
+		break;
+	defualt:
+		break;
+	};
+
+	
+}
+
+
+
 void Display()
 {	
-	glm::mat4 projectionMatrix = glm::perspective(glm::radians(60.0f), float(WINDOW_WIDTH) / float(WINDOW_HEIGHT), 0.1f, 100.0f);
+	glm::mat4 projectionMatrix = glm::	perspective(glm::radians(60.0f), float(WINDOW_WIDTH) / float(WINDOW_HEIGHT), 0.1f, 100.0f);
 	glm::mat4 modelViewMatrix = glm::lookAt(eyeDistance * glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f)) * glm::rotate(glm::mat4(1.0f), angle, glm::vec3(0.0f, 1.0f, 0.0f));
+	minimumZ = minZ();
+	maximumZ = maxZ();
 
 	if (isOpenGL)
 	{
 		if (isTextured)
 			glBindTexture(GL_TEXTURE_2D, texID);
 		
-		for (int i = 0; i < triangleVector.size(); i++)
+		for (int i = 0; i < triangleVector.size(); i++) {
+			if (!isColorSet) triangleVector[i].setColor(setTriangleColor(triangleVector[i].getVertex()));
 			triangleVector[i].RenderOpenGL(modelViewMatrix, projectionMatrix, isTextured);
-		
+		}
+		isColorSet = true;
 		if (isTextured)
 			glBindTexture(GL_TEXTURE_2D, 0);
 	}
@@ -86,12 +200,15 @@ void CharacterCallback(GLFWwindow* lWindow, unsigned int key)
 	switch (key) 
 	{
 	case '0':
+		if (colorMode != 0) isColorSet = false;
 		colorMode = 0;
 		break;
 	case '1':
+		if (colorMode != 1) isColorSet = false;
 		colorMode = 1;
 		break;
 	case '2':
+		if (colorMode != 2) isColorSet = false;
 		colorMode = 2;
 		break;
 	case 'w':
@@ -317,7 +434,6 @@ void Init()
 		isTextured = false;
 		
 	CreateTriangleVector(vertices, texCoords);
-	
 }
 
 

@@ -29,4 +29,12 @@ class Triangle {
 
 		// Rendering the triangle using CPU
 		void RenderCPU();
+
+		void setColor(std::vector<glm::vec3> traingleColor);
+
+		float maxZ();
+
+		float minZ();
+
+		glm::vec3* Triangle::getVertex();
 };

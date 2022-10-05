@@ -106,7 +106,35 @@ void Triangle::RenderOpenGL(glm::mat4 &modelViewMatrix, glm::mat4 &projectionMat
 	}
 
 }
+void Triangle::setColor(std::vector<glm::vec3> traingleColor) {
+	this->c[0] = traingleColor[0];
+	this->c[1] = traingleColor[1];
+	this->c[2] = traingleColor[2];
+}
 
+glm::vec3* Triangle::getVertex() {
+	return this->v;
+}
+
+float Triangle::maxZ() {
+	float z0 = v[0].z;
+	float z1 = v[1].z;
+	float z2 = v[2].z;
+
+	if (z0 >z1 && z0 > z2) return z0;
+	else if (z1 > z2) return z1;
+	else return z2;
+}
+
+float Triangle::minZ() {
+	float z0 = v[0].z;
+	float z1 = v[1].z;
+	float z2 = v[2].z;
+
+	if (z0 < z1 && z0 < z2) return z0;
+	else if (z1 < z2) return z1;
+	else return z2;
+}
 
 // Render the triangle on CPU
 void Triangle::RenderCPU()
