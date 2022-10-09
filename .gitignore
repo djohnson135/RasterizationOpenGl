@@ -4,11 +4,15 @@
 /build
 /out
 /.vs
+*.pdf
+
 # Compiled Object files
 *.slo
 *.lo
 *.o
-*.obj
+
+# graphic objects
+# *.obj
 
 # Precompiled Headers
 *.gch
