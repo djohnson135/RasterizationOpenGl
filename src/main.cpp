@@ -166,8 +166,11 @@ void Display()
 {	
 	glm::mat4 projectionMatrix = glm::	perspective(glm::radians(60.0f), float(WINDOW_WIDTH) / float(WINDOW_HEIGHT), 0.1f, 100.0f);
 	glm::mat4 modelViewMatrix = glm::lookAt(eyeDistance * glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f)) * glm::rotate(glm::mat4(1.0f), angle, glm::vec3(0.0f, 1.0f, 0.0f));
-	minimumZ = minZ();
-	maximumZ = maxZ();
+
+	if (triangleVector.size() > 0) {
+		minimumZ = minZ();
+		maximumZ = maxZ();
+	}
 
 	if (isOpenGL)
 	{
@@ -184,9 +187,11 @@ void Display()
 	}
 	else
 	{
-		for (int i = 0; i < triangleVector.size(); i++)
-			triangleVector[i].RenderCPU();
+		for (int i = 0; i < triangleVector.size(); i++) {
+			triangleVector[i].RenderCPU(modelViewMatrix, projectionMatrix, &color[0][0][0], &depth[0][0], WINDOW_HEIGHT, WINDOW_WIDTH);
+			//triangleVector[i].RenderCPU(color, depth);
 
+		}
 		glDrawPixels(WINDOW_WIDTH, WINDOW_HEIGHT, GL_RGB, GL_FLOAT, &color[0][0][0]);
 		ClearFrameBuffer();
 	}
