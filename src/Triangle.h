@@ -53,32 +53,36 @@ class Triangle {
 		template <size_t rows, size_t columns, size_t num_color>
 		void RenderCPU(glm::mat4& modelViewMatrix, glm::mat4& projectionMatrix, float(&color)[rows][columns][num_color], float(&depth)[rows][columns], size_t WINDOW_HEIGHT, size_t WINDOW_WIDTH) {
 
+
 			glm::mat4 viewport(
-				(float)WINDOW_WIDTH / 2.0, 0, 0, (float)WINDOW_WIDTH / 2.0,
-				0.0f, (float)WINDOW_HEIGHT / 2.0, 0.0f, (float)WINDOW_HEIGHT / 2.0,
+
+				(float)WINDOW_WIDTH / 2.0, 0.0f, 0.0f, 0.0f,
+
+				0.0f, (float)WINDOW_HEIGHT / 2.0, 0.0f, 0.0f,
+
 				0.0f, 0.0f, 1.0f, 0.0f,
-				0.0f, 0.0f, 0.0f, 1.0f
+
+				(float)WINDOW_WIDTH / 2.0, (float)WINDOW_HEIGHT / 2.0, 0.0f, 1.0f
 			);
+
+
 			//Object coordinate to clip space (NDC)
-			//float colorArray[WINDOW_HEIGHT][WINDOW_WIDTH][3] = (float* (*)[WINDOW_HEIGHT][WINDOW_WIDTH][3]) color;
 
 			//right multiply perspective and lookat matrix
 			glm::mat4 top = glm::mat4(1.0); //identity
 
-			top *= viewport;
-
-			
-			top *= projectionMatrix;
-			top *= modelViewMatrix;
+			top = top * viewport;
+			top = top * projectionMatrix;
+			top = top * modelViewMatrix;
 
 			//homogenous coordinate
 			glm::vec4 gl_positionV0(this->v[0], 1);
 			glm::vec4 gl_positionV1(this->v[1], 1);
 			glm::vec4 gl_positionV2(this->v[2], 1);
 
-			gl_positionV0 = gl_positionV0 * top;
-			gl_positionV1 = gl_positionV1 * top;
-			gl_positionV2 = gl_positionV2 * top;
+			gl_positionV0 = top * gl_positionV0;
+			gl_positionV1 = top * gl_positionV1;
+			gl_positionV2 = top * gl_positionV2;
 
 
 			//convert back to vec3 by dividing by w coordinate
