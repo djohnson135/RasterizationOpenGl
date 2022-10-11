@@ -31,8 +31,8 @@ class Triangle {
 		/*template <int WINDOW_HEIGHT, int WINDOW_WIDTH>
 		void RenderCPU(float (& color)[WINDOW_HEIGHT][WINDOW_WIDTH][3], float (& depth)[WINDOW_HEIGHT][WINDOW_WIDTH]);*/
 
+		//template <size_t WINDOW_HEIGHT, size_t WINDOW_WIDTH>
 		
-		void RenderCPU(glm::mat4& modelViewMatrix, glm::mat4& projectionMatrix, float * color, float * depth, size_t WINDOW_HEIGHT, size_t WINDOW_WIDTH);
 
 		/*template <typename colorVector, typename depthVector>
 		void RenderCPU(colorVector& color, depthVector& depth);*/
@@ -41,19 +41,65 @@ class Triangle {
 
 		float maxZ();
 
-		float maxX();
-
-		float maxY();
-
 		float minZ();
-
-		float minX();
-
-		float minY();
 
 		float min(float z0, float z1, float z2);
 
 		float max(float z0, float z1, float z2);
 
 		glm::vec3* Triangle::getVertex();
+
+
+		template <size_t rows, size_t columns, size_t num_color>
+		void RenderCPU(glm::mat4& modelViewMatrix, glm::mat4& projectionMatrix, float(&color)[rows][columns][num_color], float(&depth)[rows][columns], size_t WINDOW_HEIGHT, size_t WINDOW_WIDTH) {
+
+			glm::mat4 viewport(
+				(float)WINDOW_WIDTH / 2.0, 0, 0, (float)WINDOW_WIDTH / 2.0,
+				0.0f, (float)WINDOW_HEIGHT / 2.0, 0.0f, (float)WINDOW_HEIGHT / 2.0,
+				0.0f, 0.0f, 1.0f, 0.0f,
+				0.0f, 0.0f, 0.0f, 1.0f
+			);
+			//Object coordinate to clip space (NDC)
+			//float colorArray[WINDOW_HEIGHT][WINDOW_WIDTH][3] = (float* (*)[WINDOW_HEIGHT][WINDOW_WIDTH][3]) color;
+
+			//right multiply perspective and lookat matrix
+			glm::mat4 top = glm::mat4(1.0); //identity
+
+			top *= viewport;
+
+			
+			top *= projectionMatrix;
+			top *= modelViewMatrix;
+
+			//homogenous coordinate
+			glm::vec4 gl_positionV0(this->v[0], 1);
+			glm::vec4 gl_positionV1(this->v[1], 1);
+			glm::vec4 gl_positionV2(this->v[2], 1);
+
+			gl_positionV0 = gl_positionV0 * top;
+			gl_positionV1 = gl_positionV1 * top;
+			gl_positionV2 = gl_positionV2 * top;
+
+
+			//convert back to vec3 by dividing by w coordinate
+			glm::vec3 v0(gl_positionV0 / gl_positionV0.w);
+			glm::vec3 v1(gl_positionV1 / gl_positionV1.w);
+			glm::vec3 v2(gl_positionV2 / gl_positionV2.w);
+
+			//maybe clamp later
+			int _minX = ceil(min(v0.x, v1.x, v2.x));
+			int _maxX = ceil(max(v0.x, v1.x, v2.x));
+			int _minY = ceil(min(v0.y, v1.y, v2.y));
+			int _maxY = ceil(max(v0.y, v1.y, v2.y));
+
+			for (int i = _minY; i < _maxY; i++) { //height y
+				for (int j = _minX; j < _maxX; j++) { //width x
+					//perform the inside test
+					for (int k = 0; k < 3; k++) {
+
+						color[i][j][k] = 1;
+					}
+				}
+			}
+		}
 };

@@ -2,7 +2,7 @@
 #include <GL/glew.h>
 #include <glm/gtc/type_ptr.hpp>
 #include <algorithm>
-
+#include <iostream>
 // A function clamping the input values to the lower and higher bounds
 #define CLAMP(in, low, high) ((in) < (low) ? (low) : ((in) > (high) ? (high) : in))
 
@@ -125,24 +125,7 @@ float Triangle::maxZ() {
 	else if (z1 > z2) return z1;
 	else return z2;
 }
-float Triangle::maxX() {
-	float z0 = v[0].x;
-	float z1 = v[1].x;
-	float z2 = v[2].x;
 
-	if (z0 > z1 && z0 > z2) return z0;
-	else if (z1 > z2) return z1;
-	else return z2;
-}
-float Triangle::maxY() {
-	float z0 = v[0].y;
-	float z1 = v[1].y;
-	float z2 = v[2].y;
-
-	if (z0 > z1 && z0 > z2) return z0;
-	else if (z1 > z2) return z1;
-	else return z2;
-}
 float Triangle::minZ() {
 	float z0 = v[0].z;
 	float z1 = v[1].z;
@@ -153,24 +136,6 @@ float Triangle::minZ() {
 	else return z2;
 }
 
-float Triangle::minX() {
-	float z0 = v[0].x;
-	float z1 = v[1].x;
-	float z2 = v[2].x;
-
-	if (z0 < z1 && z0 < z2) return z0;
-	else if (z1 < z2) return z1;
-	else return z2;
-}
-float Triangle::minY() {
-	float z0 = v[0].y;
-	float z1 = v[1].y;
-	float z2 = v[2].y;
-
-	if (z0 < z1 && z0 < z2) return z0;
-	else if (z1 < z2) return z1;
-	else return z2;
-}
 
 float Triangle::min(float z0, float z1, float z2) {
 	if (z0 < z1 && z0 < z2) return z0;
@@ -195,86 +160,68 @@ float Triangle::max(float z0, float z1, float z2) {
 //void Triangle::RenderCPU(colorVector& color, depthVector& depth) {
 //
 //}
-//template <size_t WINDOW_HEIGHT, size_t WINDOW_WIDTH>
-
-void Triangle::RenderCPU(glm::mat4& modelViewMatrix, glm::mat4& projectionMatrix, float* color, float* depth, size_t WINDOW_HEIGHT, size_t WINDOW_WIDTH)
-{
-	
-
-	//Object coordinate to clip space (NDC)
-	
-	//right multiply perspective and lookat matrix
-	glm::mat4 top = glm::mat4(1.0); //identity
 
 
-	top *= modelViewMatrix;
-	top *= projectionMatrix;
 
-
-	//right multiply by the viewport matrix
-	
-	glm::mat4 viewport(
-		(float) WINDOW_WIDTH/ 2.0, 0, 0, (float) WINDOW_WIDTH / 2.0,
-		0.0f, (float) WINDOW_HEIGHT / 2.0, 0.0f, (float) WINDOW_HEIGHT / 2.0,
-		0.0f, 0.0f, 1.0f, 0.0f,
-		0.0f, 0.0f, 0.0f, 1.0f
-	);
-	//top *= viewport;
-	
-	//convert vertices to homogeneous coordinate and multipy by mat4
-
-	glm::vec4 gl_positionV0(this->v[0], 1);
-	glm::vec4 gl_positionV1(this->v[1], 1);
-	glm::vec4 gl_positionV2(this->v[2], 1);
-
-	
-	
-	gl_positionV0 = gl_positionV0 * top;
-	gl_positionV1 = gl_positionV1 * top;
-	gl_positionV2 = gl_positionV2 * top;
-
-	gl_positionV0 = gl_positionV0 * viewport;
-	gl_positionV1 = gl_positionV1 * viewport;
-	gl_positionV2 = gl_positionV2 * viewport;
-
-	//convert back to vec3 by dividing by w coordinate
-	glm::vec3 ocV0(gl_positionV0 / gl_positionV0.w);
-	glm::vec3 ocV1(gl_positionV1 / gl_positionV1.w);
-	glm::vec3 ocV2(gl_positionV2 / gl_positionV2.w);
-
-	float _minX = min(ocV0.x, ocV1.x, ocV2.x);
-	float _maxX = max(ocV0.x, ocV1.x, ocV2.x);
-	float _minY = min(ocV0.y, ocV1.y, ocV2.y);
-	float _maxY = max(ocV0.y, ocV1.y, ocV2.y);
-
-	//for (int i = _minY; i < _maxY; i++) { //height y
-	//	for (int j = _minX; j < _maxX; j++) { //width x
-	//		//perform the inside test
-	//		*(((color + i * j) + 0)) = c[0].x;
-	//		*(((color + i * j) + 1)) = c[0].y;
-	//		*(((color + i * j) + 2)) = c[0].z;
-
-	//	}
-	//}
-	
-	for (int i = 0; i < 100; i++) { //height y
-		for (int j = 0; j < 100; j++) { //width x
-			//perform the inside test
-			*(((color + i * j) + 0)) = c[0].x;
-			*(((color + i * j) + 1)) = c[0].y;
-			*(((color + i * j) + 2)) = c[0].z;
-
-		}
-	}
-
-	//for (int i = 0; i <WINDOW_HEIGHT; i++) { //height y
-	//	for (int j = 0; j < WINDOW_WIDTH; j++) { //width x
-	//		//perform the inside test
-	//		*(((color + i * j) + 0)) = c[0].x;
-	//		*(((color + i * j) + 1)) = c[0].y;
-	//		*(((color + i * j) + 2)) = c[0].z;
-	//	}
-	//}
-
-	
-}
+//template <size_t rows, size_t columns, size_t num_color>
+//void Triangle::RenderCPU(glm::mat4& modelViewMatrix, glm::mat4& projectionMatrix, float (&color)[rows][columns][num_color], float (&depth)[rows][columns], size_t WINDOW_HEIGHT, size_t WINDOW_WIDTH)
+//{
+//	
+//	glm::mat4 viewport(
+//		(float)WINDOW_WIDTH / 2.0, 0, 0, (float)WINDOW_WIDTH / 2.0,
+//		0.0f, (float)WINDOW_HEIGHT / 2.0, 0.0f, (float)WINDOW_HEIGHT / 2.0,
+//		0.0f, 0.0f, 1.0f, 0.0f,
+//		0.0f, 0.0f, 0.0f, 1.0f
+//	);
+//	//Object coordinate to clip space (NDC)
+//	//float colorArray[WINDOW_HEIGHT][WINDOW_WIDTH][3] = (float* (*)[WINDOW_HEIGHT][WINDOW_WIDTH][3]) color;
+//
+//	//right multiply perspective and lookat matrix
+//	glm::mat4 top = glm::mat4(1.0); //identity
+//
+//	top *= viewport;
+//	
+//	top *= projectionMatrix;
+//	top *= modelViewMatrix;
+//
+//	//homogenous coordinate
+//	glm::vec4 gl_positionV0(this->v[0], 1);
+//	glm::vec4 gl_positionV1(this->v[1], 1);
+//	glm::vec4 gl_positionV2(this->v[2], 1);
+//	
+//
+//	gl_positionV0 = gl_positionV0 * top;
+//	gl_positionV1 = gl_positionV1 * top;
+//	gl_positionV2 = gl_positionV2 * top;
+//
+//
+//	
+//	//convert back to vec3 by dividing by w coordinate
+//	glm::vec3 v0(gl_positionV0 / gl_positionV0.w);
+//	glm::vec3 v1(gl_positionV1 / gl_positionV1.w);
+//	glm::vec3 v2(gl_positionV2 / gl_positionV2.w);
+//
+//	//maybe clamp later
+//	int _minX = ceil(min(v0.x, v1.x, v2.x));
+//	int _maxX = ceil(max(v0.x, v1.x, v2.x));
+//	int _minY = ceil(min(v0.y, v1.y, v2.y));
+//	int _maxY = ceil(max(v0.y, v1.y, v2.y));
+//
+//	if (_maxX > 1000) std::cout << _maxX << std::endl;
+//	if (_maxY > 1000) std::cout << _maxY << std::endl;
+//
+//	//float* root = color;
+//
+//	for (int i = _minY; i < _maxY; i++) { //height y
+//		for (int j = _minX; j < _maxX; j++) { //width x
+//			//perform the inside test
+//			for (int k = 0; k < 3; k++) {
+//				
+//				color[i][j][k] = 1;
+//
+//				//*(((color + i * j) + k)) = 1;
+//			}
+//		}
+//		//color = root;
+//	}
+//}
