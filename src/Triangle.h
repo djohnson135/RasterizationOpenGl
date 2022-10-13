@@ -5,6 +5,7 @@
 #include <vector>
 
 #include <glm/glm.hpp>
+#define CLAMP(in, low, high) ((in) < (low) ? (low) : ((in) > (high) ? (high) : in))
 
 
 class Triangle {
@@ -83,7 +84,7 @@ class Triangle {
 			gl_positionV0 = top * gl_positionV0;
 			gl_positionV1 = top * gl_positionV1;
 			gl_positionV2 = top * gl_positionV2;
-
+			//compute alpha beta gamma and check if between 0 and 1
 
 			//convert back to vec3 by dividing by w coordinate
 			glm::vec3 v0(gl_positionV0 / gl_positionV0.w);
@@ -91,10 +92,10 @@ class Triangle {
 			glm::vec3 v2(gl_positionV2 / gl_positionV2.w);
 
 			//maybe clamp later
-			int _minX = ceil(min(v0.x, v1.x, v2.x));
-			int _maxX = ceil(max(v0.x, v1.x, v2.x));
-			int _minY = ceil(min(v0.y, v1.y, v2.y));
-			int _maxY = ceil(max(v0.y, v1.y, v2.y));
+			int _minX = CLAMP(ceil(min(v0.x, v1.x, v2.x)), 0, WINDOW_WIDTH);
+			int _maxX = CLAMP(ceil(max(v0.x, v1.x, v2.x)), 0, WINDOW_WIDTH);
+			int _minY = CLAMP(ceil(min(v0.y, v1.y, v2.y)), 0, WINDOW_HEIGHT);
+			int _maxY = CLAMP(ceil(max(v0.y, v1.y, v2.y)), 0, WINDOW_HEIGHT);
 
 			for (int i = _minY; i < _maxY; i++) { //height y
 				for (int j = _minX; j < _maxX; j++) { //width x
