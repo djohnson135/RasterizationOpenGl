@@ -5,6 +5,7 @@
 #include <vector>
 
 #include <glm/glm.hpp>
+#define CLAMP(in, low, high) ((in) < (low) ? (low) : ((in) > (high) ? (high) : in))
 
 #define CLAMP(in, low, high) ((in) < (low) ? (low) : ((in) > (high) ? (high) : in))
 
@@ -109,7 +110,7 @@ class Triangle {
 			gl_positionV0 = top * gl_positionV0;
 			gl_positionV1 = top * gl_positionV1;
 			gl_positionV2 = top * gl_positionV2;
-
+			//compute alpha beta gamma and check if between 0 and 1
 
 			//convert back to vec3 by dividing by w coordinate
 			glm::vec3 v0(gl_positionV0 / gl_positionV0.w);
