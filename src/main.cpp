@@ -411,6 +411,8 @@ std::string WindowTitle(std::string mainName)
 		return (mainName + hardwareName + std::string(" - Colored") + colorMethod);
 }
 
+
+
 void Init()
 {
 	glfwInit();
@@ -428,7 +430,35 @@ void Init()
 
 	std::vector<glm::vec3> vertices;
 	std::vector<glm::vec2> texCoords;
-	LoadModel("../resources/bunny.obj", vertices, texCoords);
+	int fileNum;
+	std::string filePath;
+	std::cout << "Select what object to render by entering 1, 2, or 3" << std::endl
+		<< "Enter 1 for bunny" << std::endl << "Enter 2 for duck" << std::endl << "Enter 3 for sphere" << std::endl;
+	
+	
+	std::cin >> fileNum;
+	bool isFileChosen = false;
+	while(!isFileChosen)
+	switch (fileNum) {
+	case 1:
+		filePath = "../resources/bunny.obj";
+		isFileChosen = true;
+		break;
+	case 2:
+		filePath = "../resources/duck.obj";
+		isFileChosen = true;
+		break;
+	case 3:
+		filePath = "../resources/sphere.obj";
+		isFileChosen = true;
+		break;
+	default:
+		std::cout << "Incorrect input try again" <<std::endl;
+		filePath = "../resources/bunny.obj";
+		break;
+	}
+
+	LoadModel((char *) filePath.c_str(), vertices, texCoords);
 	
 	if (!texCoords.empty())
 	{
