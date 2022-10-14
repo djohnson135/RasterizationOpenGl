@@ -6,6 +6,9 @@
 // A function clamping the input values to the lower and higher bounds
 #define CLAMP(in, low, high) ((in) < (low) ? (low) : ((in) > (high) ? (high) : in))
 
+
+
+
 Triangle::Triangle()
 {
 	v[0] = glm::vec3(0.0f, 0.0f, 0.0f);
@@ -148,6 +151,35 @@ float Triangle::max(float z0, float z1, float z2) {
 	else if (z1 > z2) return z1;
 	else return z2;
 }
+
+
+Baycentric Triangle::baycentricCoordinate(float xPos, float yPos, glm::vec3 A, glm::vec3 B, glm::vec3 C) {
+	//v[0] = A
+	//v[1] = B
+	//v[2] = C
+	/*glm::vec3 A = v[0];
+	glm::vec3 B = v[1];
+	glm::vec3 C = v[2];*/
+
+
+	float alpha = (-1 * ((xPos - B.x) * (C.y - B.y)) + (yPos - B.y) * (C.x - B.x)) /
+		(-1 * ((A.x - B.x) * (C.y - B.y)) + (A.y - B.y) * (C.x - B.x));
+
+	float beta = (-1 * ((xPos - C.x) * (A.y - C.y)) + (yPos - C.y) * (A.x - C.x)) /
+		(-1 * ((B.x - C.x) * (A.y - C.y)) + (B.y - C.y) * (A.x - C.x));
+
+	float gamma = 1 - alpha - beta;
+
+	return Baycentric(alpha, beta, gamma);
+
+
+}
+
+void Triangle::bufferUpdate() {
+
+}
+
+
 
 // Render the triangle on CPU
 //template <int WINDOW_HEIGHT, int WINDOW_WIDTH>

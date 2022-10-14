@@ -6,6 +6,26 @@
 
 #include <glm/glm.hpp>
 
+#define CLAMP(in, low, high) ((in) < (low) ? (low) : ((in) > (high) ? (high) : in))
+
+
+struct Baycentric {
+	float alpha = -1;
+	float beta = -1;
+	float gamma = -1;
+	Baycentric(float alpha, float beta, float gamma) : alpha(alpha), beta(beta), gamma(gamma) {};
+	bool Inside() {
+		if (this->alpha >= 0 && this->alpha <= 1) {
+			if (this->beta >= 0 && this->beta <= 1) {
+				if (this->gamma >= 0 && this->gamma <= 1) return true;
+			}
+		}
+		return false;
+	}
+
+};
+
+
 
 class Triangle {
 	private:
@@ -49,6 +69,12 @@ class Triangle {
 
 		glm::vec3* Triangle::getVertex();
 
+		float insideTest();
+
+		Baycentric baycentricCoordinate(float xPos, float yPos, glm::vec3 A, glm::vec3 B, glm::vec3 C);
+
+		void bufferUpdate();
+
 
 		template <size_t rows, size_t columns, size_t num_color>
 		void RenderCPU(glm::mat4& modelViewMatrix, glm::mat4& projectionMatrix, float(&color)[rows][columns][num_color], float(&depth)[rows][columns], size_t WINDOW_HEIGHT, size_t WINDOW_WIDTH) {
@@ -91,18 +117,29 @@ class Triangle {
 			glm::vec3 v2(gl_positionV2 / gl_positionV2.w);
 
 			//maybe clamp later
-			int _minX = ceil(min(v0.x, v1.x, v2.x));
-			int _maxX = ceil(max(v0.x, v1.x, v2.x));
-			int _minY = ceil(min(v0.y, v1.y, v2.y));
-			int _maxY = ceil(max(v0.y, v1.y, v2.y));
+			int _minX = CLAMP(trunc(min(v0.x, v1.x, v2.x)), 0, WINDOW_WIDTH);
+			int _maxX = CLAMP(ceil(max(v0.x, v1.x, v2.x)), 0, WINDOW_WIDTH);
+			int _minY = CLAMP(trunc(min(v0.y, v1.y, v2.y)), 0, WINDOW_HEIGHT);
+			int _maxY = CLAMP(ceil(max(v0.y, v1.y, v2.y)), 0, WINDOW_HEIGHT);
 
 			for (int i = _minY; i < _maxY; i++) { //height y
 				for (int j = _minX; j < _maxX; j++) { //width x
 					//perform the inside test
-					for (int k = 0; k < 3; k++) {
+					
+					//center of pixel
+					float xCenter = j + 0.5;
+					float yCenter = i + 0.5;
+					//calculate alpha beta and gamma
+					Baycentric bayCentric = baycentricCoordinate(xCenter, yCenter, v0, v1, v2);
+					if (bayCentric.Inside()) {
+						
+						
+						for (int k = 0; k < 3; k++) {
 
-						color[i][j][k] = 1;
+							color[i][j][k] = 1;
+						}
 					}
+
 				}
 			}
 		}
