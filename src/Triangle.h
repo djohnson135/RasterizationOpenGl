@@ -134,14 +134,15 @@ class Triangle {
 					//calculate alpha beta and gamma
 					Baycentric pos = baycentricCoordinate(xCenter, yCenter, v0, v1, v2);
 					if (pos.Inside()) {
-						
-						//color vertices
-						//Baycentric newColor = baycentricCoordinate(xCenter, yCenter, this->c[0], this->c[1], this->c[2]);
-						if (_minz <= depth[i][j]) {
+
+						//float maxDepth = pos.alpha * this->v[0].z + pos.beta * this->v[1].z + pos.gamma * this->v[2].z;
+						float zInterpolate = v0.z * (1 - pos.gamma) + v1.z * pos.gamma;
+
+						if (zInterpolate <= depth[i][j]) {
 							color[i][j][0] = this->c[0].x * pos.alpha + this->c[1].x * pos.beta + this->c[2].x * pos.gamma;
 							color[i][j][1] = this->c[0].y * pos.alpha + this->c[1].y * pos.beta + this->c[2].y * pos.gamma;
 							color[i][j][2] = this->c[0].z * pos.alpha + this->c[1].z * pos.beta + this->c[2].z * pos.gamma;
-							depth[i][j] = _minz;
+							depth[i][j] = zInterpolate;
 						}
 						
 					}

@@ -154,13 +154,6 @@ float Triangle::max(float z0, float z1, float z2) {
 
 
 Baycentric Triangle::baycentricCoordinate(float xPos, float yPos, glm::vec3 A, glm::vec3 B, glm::vec3 C) {
-	//v[0] = A
-	//v[1] = B
-	//v[2] = C
-	/*glm::vec3 A = v[0];
-	glm::vec3 B = v[1];
-	glm::vec3 C = v[2];*/
-
 
 	float alpha = (-1 * ((xPos - B.x) * (C.y - B.y)) + (yPos - B.y) * (C.x - B.x)) /
 		(-1 * ((A.x - B.x) * (C.y - B.y)) + (A.y - B.y) * (C.x - B.x));
