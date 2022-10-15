@@ -70,11 +70,7 @@ class Triangle {
 
 		glm::vec3* Triangle::getVertex();
 
-		float insideTest();
-
 		Baycentric baycentricCoordinate(float xPos, float yPos, glm::vec3 A, glm::vec3 B, glm::vec3 C);
-
-		void bufferUpdate();
 
 
 		template <size_t rows, size_t columns, size_t num_color>
@@ -135,8 +131,7 @@ class Triangle {
 					Baycentric pos = baycentricCoordinate(xCenter, yCenter, v0, v1, v2);
 					if (pos.Inside()) {
 
-						//float maxDepth = pos.alpha * this->v[0].z + pos.beta * this->v[1].z + pos.gamma * this->v[2].z;
-						float zInterpolate = v0.z * (1 - pos.gamma) + v1.z * pos.gamma;
+						float zInterpolate = v0.z * pos.alpha + v1.z * pos.beta + v2.z * pos.gamma;
 
 						if (zInterpolate <= depth[i][j]) {
 							color[i][j][0] = this->c[0].x * pos.alpha + this->c[1].x * pos.beta + this->c[2].x * pos.gamma;

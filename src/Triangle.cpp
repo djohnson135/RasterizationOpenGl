@@ -167,7 +167,3 @@ Baycentric Triangle::baycentricCoordinate(float xPos, float yPos, glm::vec3 A, g
 
 
 }
-
-void Triangle::bufferUpdate() {
-
-}
