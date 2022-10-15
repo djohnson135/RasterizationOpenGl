@@ -69,25 +69,6 @@ float minZ() {
 	return max->minZ();
 }
 
-//void maxMinZ() {
-//	float max = triangleVector[0].maxZ();
-//	float min = triangleVector[0].minZ();
-//	for (int i = 1; i < triangleVector.size(); i++)
-//	{
-//		// if the current element is greater than the maximum found so far
-//		if (triangleVector[i].maxZ() > max) {
-//			max = triangleVector[i].maxZ();
-//		}
-//
-//		// if the current element is smaller than the minimum found so far
-//		else if (triangleVector[i].minZ() < min) {
-//			min = triangleVector[i].minZ();
-//		}
-//	}
-//	minimumZ = min;
-//	maximumZ = max;
-//}
-
 
 std::vector<glm::vec3> randColorTriangle() {
 	
@@ -194,10 +175,10 @@ void Display()
 	else
 	{
 		for (int i = 0; i < triangleVector.size(); i++) {
+			if (!isColorSet) triangleVector[i].setColor(setTriangleColor(triangleVector[i].getVertex()));
 			triangleVector[i].RenderCPU(modelViewMatrix, projectionMatrix, color, depth, WINDOW_HEIGHT, WINDOW_WIDTH);
-			//triangleVector[i].RenderCPU(color, depth);
-
 		}
+		isColorSet = true;
 		glDrawPixels(WINDOW_WIDTH, WINDOW_HEIGHT, GL_RGB, GL_FLOAT, &color[0][0][0]);
 		ClearFrameBuffer();
 	}
@@ -293,7 +274,7 @@ void CreateTriangleVector(std::vector<glm::vec3> &vertices, std::vector<glm::vec
 }
 
 // Load the geometry and texture coordinates if available
-void LoadModel(char* name, std::vector<glm::vec3> &vertices, std::vector<glm::vec2>& texCoords)
+bool LoadModel(char* name, std::vector<glm::vec3> &vertices, std::vector<glm::vec2>& texCoords)
 {
 	// Taken from Shinjiro Sueda with slight modification
 	std::string meshName(name);
@@ -304,6 +285,7 @@ void LoadModel(char* name, std::vector<glm::vec3> &vertices, std::vector<glm::ve
 	bool rc = tinyobj::LoadObj(&attrib, &shapes, &materials, &errStr, meshName.c_str());
 	if (!rc) {
 		std::cerr << errStr << std::endl;
+		return false;
 	}
 	else {
 		// Some OBJ files have different indices for vertex positions, normals,
@@ -332,6 +314,7 @@ void LoadModel(char* name, std::vector<glm::vec3> &vertices, std::vector<glm::ve
 			}
 		}
 	}
+	return true;
 }
 
 // Load texture and create downsampled versions of it for mipmapping
@@ -438,35 +421,16 @@ void Init()
 
 	std::vector<glm::vec3> vertices;
 	std::vector<glm::vec2> texCoords;
-	int fileNum;
+	bool isFileLoaded = false;
 	std::string filePath;
-	std::cout << "Select what object to render by entering 1, 2, or 3" << std::endl
-		<< "Enter 1 for bunny" << std::endl << "Enter 2 for duck" << std::endl << "Enter 3 for sphere" << std::endl;
-	
-	
-	std::cin >> fileNum;
-	bool isFileChosen = false;
-	while(!isFileChosen)
-	switch (fileNum) {
-	case 1:
-		filePath = "../resources/bunny.obj";
-		isFileChosen = true;
-		break;
-	case 2:
-		filePath = "../resources/duck.obj";
-		isFileChosen = true;
-		break;
-	case 3:
-		filePath = "../resources/sphere.obj";
-		isFileChosen = true;
-		break;
-	default:
-		std::cout << "Incorrect input try again" <<std::endl;
-		filePath = "../resources/bunny.obj";
-		break;
+	std::string filename;
+	while (!isFileLoaded) {
+		filePath = "../resources/";
+		std::cout << "Enter your object file name. Example input: bunny.obj" << std::endl;
+		std::cin >> filename;
+		isFileLoaded = LoadModel((char*)(filePath + filename).c_str(), vertices, texCoords);
 	}
-
-	LoadModel((char *) filePath.c_str(), vertices, texCoords);
+	
 	
 	if (!texCoords.empty())
 	{
