@@ -168,6 +168,11 @@ void Display()
 	glm::mat4 projectionMatrix = glm::perspective(glm::radians(60.0f), float(WINDOW_WIDTH) / float(WINDOW_HEIGHT), 0.1f, 100.0f);
 	glm::mat4 modelViewMatrix = glm::lookAt(eyeDistance * glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f)) * glm::rotate(glm::mat4(1.0f), angle, glm::vec3(0.0f, 1.0f, 0.0f));
 
+	for (int i = 0; i < WINDOW_HEIGHT; i++) {
+		for (int j = 0; j < WINDOW_WIDTH; j++) {
+			depth[i][j] = FLT_MAX;
+		}
+	}
 	if (triangleVector.size() > 0) {
 		minimumZ = minZ();
 		maximumZ = maxZ();
@@ -427,6 +432,9 @@ void Init()
 	glEnable(GL_DEPTH_TEST);
 
 	ClearFrameBuffer();
+
+	
+
 
 	std::vector<glm::vec3> vertices;
 	std::vector<glm::vec2> texCoords;

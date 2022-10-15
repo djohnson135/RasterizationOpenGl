@@ -122,6 +122,7 @@ class Triangle {
 			int _maxX = CLAMP(ceil(max(v0.x, v1.x, v2.x)), 0, WINDOW_WIDTH);
 			int _minY = CLAMP(trunc(min(v0.y, v1.y, v2.y)), 0, WINDOW_HEIGHT);
 			int _maxY = CLAMP(ceil(max(v0.y, v1.y, v2.y)), 0, WINDOW_HEIGHT);
+			float _minz = min(v0.z, v1.z, v2.z);
 
 			for (int i = _minY; i < _maxY; i++) { //height y
 				for (int j = _minX; j < _maxX; j++) { //width x
@@ -131,14 +132,18 @@ class Triangle {
 					float xCenter = j + 0.5;
 					float yCenter = i + 0.5;
 					//calculate alpha beta and gamma
-					Baycentric bayCentric = baycentricCoordinate(xCenter, yCenter, v0, v1, v2);
-					if (bayCentric.Inside()) {
+					Baycentric pos = baycentricCoordinate(xCenter, yCenter, v0, v1, v2);
+					if (pos.Inside()) {
 						
-						
-						for (int k = 0; k < 3; k++) {
-
-							color[i][j][k] = 1;
+						//color vertices
+						//Baycentric newColor = baycentricCoordinate(xCenter, yCenter, this->c[0], this->c[1], this->c[2]);
+						if (_minz <= depth[i][j]) {
+							color[i][j][0] = this->c[0].x * pos.alpha + this->c[1].x * pos.beta + this->c[2].x * pos.gamma;
+							color[i][j][1] = this->c[0].y * pos.alpha + this->c[1].y * pos.beta + this->c[2].y * pos.gamma;
+							color[i][j][2] = this->c[0].z * pos.alpha + this->c[1].z * pos.beta + this->c[2].z * pos.gamma;
+							depth[i][j] = _minz;
 						}
+						
 					}
 
 				}
