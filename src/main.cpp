@@ -422,13 +422,12 @@ void Init()
 	std::vector<glm::vec3> vertices;
 	std::vector<glm::vec2> texCoords;
 	bool isFileLoaded = false;
-	std::string filePath;
 	std::string filename;
 	while (!isFileLoaded) {
-		filePath = "../resources/";
-		std::cout << "Enter your object file name. Example input: bunny.obj" << std::endl;
+	
+		std::cout << "Enter your object file path. Example input: ../resources/bunny.obj" << std::endl;
 		std::cin >> filename;
-		isFileLoaded = LoadModel((char*)(filePath + filename).c_str(), vertices, texCoords);
+		isFileLoaded = LoadModel((char*)(filename).c_str(), vertices, texCoords);
 	}
 	
 	
