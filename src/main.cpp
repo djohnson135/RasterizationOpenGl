@@ -176,7 +176,7 @@ void Display()
 	{
 		for (int i = 0; i < triangleVector.size(); i++) {
 			if (!isColorSet) triangleVector[i].setColor(setTriangleColor(triangleVector[i].getVertex()));
-			triangleVector[i].RenderCPU(modelViewMatrix, projectionMatrix, color, depth, WINDOW_HEIGHT, WINDOW_WIDTH);
+			triangleVector[i].RenderCPU(modelViewMatrix, projectionMatrix, color, depth, WINDOW_HEIGHT, WINDOW_WIDTH, isTextured, textureMode);
 		}
 		isColorSet = true;
 		glDrawPixels(WINDOW_WIDTH, WINDOW_HEIGHT, GL_RGB, GL_FLOAT, &color[0][0][0]);
@@ -421,14 +421,16 @@ void Init()
 
 	std::vector<glm::vec3> vertices;
 	std::vector<glm::vec2> texCoords;
-	bool isFileLoaded = false;
+	/*bool isFileLoaded = false;
 	std::string filename;
 	while (!isFileLoaded) {
 	
 		std::cout << "Enter your object file path. Example input: ../resources/bunny.obj" << std::endl;
 		std::cin >> filename;
 		isFileLoaded = LoadModel((char*)(filename).c_str(), vertices, texCoords);
-	}
+	}*/
+	LoadModel("../resources/sphere.obj", vertices, texCoords);
+
 	
 	
 	if (!texCoords.empty())

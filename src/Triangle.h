@@ -23,7 +23,17 @@ struct Baycentric {
 		}
 		return false;
 	}
+};
 
+struct BoundingBox {
+	int minY, maxY, minX, maxX = 0;
+
+	BoundingBox(int minY, int maxY, int minX, int maxX) {
+		this->minY = minY;
+		this->maxY = maxY;
+		this->minX = minX;
+		this->maxX = maxX;
+	}
 };
 
 
@@ -49,14 +59,6 @@ class Triangle {
 		void RenderOpenGL(glm::mat4 &modelViewMatrix, glm::mat4 &projectionMatrix, bool textureMode);
 
 		// Rendering the triangle using CPU
-		/*template <int WINDOW_HEIGHT, int WINDOW_WIDTH>
-		void RenderCPU(float (& color)[WINDOW_HEIGHT][WINDOW_WIDTH][3], float (& depth)[WINDOW_HEIGHT][WINDOW_WIDTH]);*/
-
-		//template <size_t WINDOW_HEIGHT, size_t WINDOW_WIDTH>
-		
-
-		/*template <typename colorVector, typename depthVector>
-		void RenderCPU(colorVector& color, depthVector& depth);*/
 
 		void setColor(std::vector<glm::vec3> traingleColor);
 
@@ -72,9 +74,78 @@ class Triangle {
 
 		Baycentric baycentricCoordinate(float xPos, float yPos, glm::vec3 A, glm::vec3 B, glm::vec3 C);
 
+		template <size_t rows, size_t columns, size_t num_color>
+		void colorMapping(BoundingBox boundingBox, float(&color)[rows][columns][num_color], float(&depth)[rows][columns], glm::vec3 v0, glm::vec3 v1, glm::vec3 v2)
+		{
+			for (int i = boundingBox.minY; i < boundingBox.maxY; i++) { //height y
+				for (int j = boundingBox.minX; j < boundingBox.maxX; j++) { //width x
+					//perform the inside test
+
+					//center of pixel
+					float xCenter = j + 0.5;
+					float yCenter = i + 0.5;
+					//calculate alpha beta and gamma
+					Baycentric pos = baycentricCoordinate(xCenter, yCenter, v0, v1, v2);
+					if (pos.Inside()) {
+
+						float zInterpolate = v0.z * pos.alpha + v1.z * pos.beta + v2.z * pos.gamma;
+
+						if (zInterpolate <= depth[i][j]) {
+							color[i][j][0] = this->c[0].x * pos.alpha + this->c[1].x * pos.beta + this->c[2].x * pos.gamma;
+							color[i][j][1] = this->c[0].y * pos.alpha + this->c[1].y * pos.beta + this->c[2].y * pos.gamma;
+							color[i][j][2] = this->c[0].z * pos.alpha + this->c[1].z * pos.beta + this->c[2].z * pos.gamma;
+							depth[i][j] = zInterpolate;
+						}
+
+					}
+
+				}
+			}
+
+		}
+		template <size_t rows, size_t columns, size_t num_color>
+		void textureNearest(BoundingBox boundingBox, float(&color)[rows][columns][num_color], float(&depth)[rows][columns], glm::vec3 v0, glm::vec3 v1, glm::vec3 v2) {
+
+		}
 
 		template <size_t rows, size_t columns, size_t num_color>
-		void RenderCPU(glm::mat4& modelViewMatrix, glm::mat4& projectionMatrix, float(&color)[rows][columns][num_color], float(&depth)[rows][columns], size_t WINDOW_HEIGHT, size_t WINDOW_WIDTH) {
+		void textureLinear(BoundingBox boundingBox, float(&color)[rows][columns][num_color], float(&depth)[rows][columns], glm::vec3 v0, glm::vec3 v1, glm::vec3 v2) {
+
+		}
+
+		template <size_t rows, size_t columns, size_t num_color>
+		void textureMipMap(BoundingBox boundingBox, float(&color)[rows][columns][num_color], float(&depth)[rows][columns], glm::vec3 v0, glm::vec3 v1, glm::vec3 v2) {
+
+		}
+
+		template <size_t rows, size_t columns, size_t num_color>
+		void textureMapping(BoundingBox boundingBox, float(&color)[rows][columns][num_color], float(&depth)[rows][columns], glm::vec3 v0, glm::vec3 v1, glm::vec3 v2, int textureMode)
+		{
+			switch (textureMode) {
+			case  0:
+				//nearest
+				textureNearest(boundingBox, color, depth, v0, v1, v2);
+				break;
+			case  1:
+				//linear
+				textureLinear(boundingBox, color, depth, v0, v1, v2);
+				break;
+			case  2:
+				//mipmap
+				textureMipMap(boundingBox, color, depth, v0, v1, v2);
+				break;
+			default:
+				//make nearest?
+				textureNearest(boundingBox, color, depth, v0, v1, v2);
+				break;
+			};
+
+		}
+
+
+		
+		template <size_t rows, size_t columns, size_t num_color>
+		void RenderCPU(glm::mat4& modelViewMatrix, glm::mat4& projectionMatrix, float(&color)[rows][columns][num_color], float(&depth)[rows][columns], size_t WINDOW_HEIGHT, size_t WINDOW_WIDTH, bool isTextured, int textureMode) {
 
 
 			glm::mat4 viewport(
@@ -118,31 +189,9 @@ class Triangle {
 			int _maxX = CLAMP(ceil(max(v0.x, v1.x, v2.x)), 0, WINDOW_WIDTH);
 			int _minY = CLAMP(trunc(min(v0.y, v1.y, v2.y)), 0, WINDOW_HEIGHT);
 			int _maxY = CLAMP(ceil(max(v0.y, v1.y, v2.y)), 0, WINDOW_HEIGHT);
-			float _minz = min(v0.z, v1.z, v2.z);
 
-			for (int i = _minY; i < _maxY; i++) { //height y
-				for (int j = _minX; j < _maxX; j++) { //width x
-					//perform the inside test
-					
-					//center of pixel
-					float xCenter = j + 0.5;
-					float yCenter = i + 0.5;
-					//calculate alpha beta and gamma
-					Baycentric pos = baycentricCoordinate(xCenter, yCenter, v0, v1, v2);
-					if (pos.Inside()) {
-
-						float zInterpolate = v0.z * pos.alpha + v1.z * pos.beta + v2.z * pos.gamma;
-
-						if (zInterpolate <= depth[i][j]) {
-							color[i][j][0] = this->c[0].x * pos.alpha + this->c[1].x * pos.beta + this->c[2].x * pos.gamma;
-							color[i][j][1] = this->c[0].y * pos.alpha + this->c[1].y * pos.beta + this->c[2].y * pos.gamma;
-							color[i][j][2] = this->c[0].z * pos.alpha + this->c[1].z * pos.beta + this->c[2].z * pos.gamma;
-							depth[i][j] = zInterpolate;
-						}
-						
-					}
-
-				}
-			}
+			BoundingBox boundingBox(_minY, _maxY, _minX, _maxX);
+			if (!isTextured) colorMapping(boundingBox, color, depth, v0, v1, v2);
+			else textureMapping(boundingBox, color, depth, v0, v1, v2, textureMode);
 		}
 };
