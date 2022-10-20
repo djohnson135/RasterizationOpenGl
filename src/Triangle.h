@@ -104,22 +104,104 @@ class Triangle {
 
 		}
 		template <size_t rows, size_t columns, size_t num_color>
-		void textureNearest(BoundingBox boundingBox, float(&color)[rows][columns][num_color], float(&depth)[rows][columns], glm::vec3 v0, glm::vec3 v1, glm::vec3 v2) {
+		void textureNearest(BoundingBox boundingBox, float(&color)[rows][columns][num_color], float(&depth)[rows][columns], glm::vec4 v0, glm::vec4 v1, glm::vec4 v2) {
+			
+			glm::vec3 screenSpace0(v0 / v0.w);
+			glm::vec3 screenSpace1(v1 / v1.w);
+			glm::vec3 screenSpace2(v2 / v2.w);
+			//x and y are u and v
+
+
+			for (int i = boundingBox.minY; i < boundingBox.maxY; i++) { //height y
+				for (int j = boundingBox.minX; j < boundingBox.maxX; j++) { //width x
+					//perform the inside test
+
+					//center of pixel
+					float xCenter = j + 0.5;
+					float yCenter = i + 0.5;
+					//calculate alpha beta and gamma
+						
+
+					Baycentric pos = baycentricCoordinate(xCenter, yCenter, screenSpace0, screenSpace1, screenSpace2);
+
+					//Baycentric texture = baycentricCoordinate(xCenter, yCenter, glm::vec3(v0), glm::vec3(v1), glm::vec3(v2));
+
+					if (pos.Inside()) {
+
+
+						float zInterpolate = screenSpace0.z * pos.alpha + screenSpace1.z * pos.beta + screenSpace2.z * pos.gamma;
+
+						
+
+						
+
+						if (zInterpolate <= depth[i][j]) {
+							
+							//float zScreenSpaceInterpolate = (1 / v0.z) * pos.alpha + (1 / v1.z) * pos.beta + (1 / v2.z) * pos.gamma;
+							float zScreenSpaceInterpolate = v0.z * pos.alpha + v1.z * pos.beta + v2.z * pos.gamma;
+
+							zScreenSpaceInterpolate = 1 / zScreenSpaceInterpolate;
+							
+							/*float uInverseInterpolate = (1 / this->t[0].x) * pos.alpha + (1 / this->t[1].x) * pos.beta + (1 / this->t[2].x) * pos.gamma;
+							float vInverseInterpolate = (1 / this->t[0].y) * pos.alpha + (1 / this->t[1].y) * pos.beta + (1 / this->t[2].y) * pos.gamma;*/
+
+							float uInverseInterpolate = this->t[0].x * pos.alpha + this->t[1].x * pos.beta + this->t[2].x * pos.gamma;
+							float vInverseInterpolate =  this->t[0].y * pos.alpha +  this->t[1].y * pos.beta +  this->t[2].y * pos.gamma;
+							uInverseInterpolate = 1 / uInverseInterpolate;
+							vInverseInterpolate = 1 / vInverseInterpolate;
+							
+							float u = uInverseInterpolate / zScreenSpaceInterpolate;
+							float v = vInverseInterpolate / zScreenSpaceInterpolate;
+
+							if (u > 1) {
+								u = u - 1;
+							}
+							if (v > 1) {
+								v = v - 1;
+							}
+							if (u < 0) {
+								u = 1 + u;
+							}
+							if (v < 0) {
+								v = 1 + v;
+							}
+							/*u = floor(u * columns);
+							v = floor(v * rows);*/
+
+							float r = texture[0][(int)v * texWidth * 3 + (int)u * 3 + 0];
+							float g = texture[0][(int)v * texWidth * 3 + (int)u * 3 + 1];
+							float b = texture[0][(int)v * texWidth * 3 + (int)u * 3 + 2];
+
+							color[i][j][0] = r;
+							color[i][j][1] = g;
+							color[i][j][2] = b;
+
+
+							depth[i][j] = zInterpolate;
+						}
+
+					}
+
+				}
+			}
+
+
+
+			
+		}
+
+		template <size_t rows, size_t columns, size_t num_color>
+		void textureBilinear(BoundingBox boundingBox, float(&color)[rows][columns][num_color], float(&depth)[rows][columns], glm::vec4 v0, glm::vec4 v1, glm::vec4 v2) {
 
 		}
 
 		template <size_t rows, size_t columns, size_t num_color>
-		void textureLinear(BoundingBox boundingBox, float(&color)[rows][columns][num_color], float(&depth)[rows][columns], glm::vec3 v0, glm::vec3 v1, glm::vec3 v2) {
+		void textureMipMap(BoundingBox boundingBox, float(&color)[rows][columns][num_color], float(&depth)[rows][columns], glm::vec4 v0, glm::vec4 v1, glm::vec4 v2) {
 
 		}
 
 		template <size_t rows, size_t columns, size_t num_color>
-		void textureMipMap(BoundingBox boundingBox, float(&color)[rows][columns][num_color], float(&depth)[rows][columns], glm::vec3 v0, glm::vec3 v1, glm::vec3 v2) {
-
-		}
-
-		template <size_t rows, size_t columns, size_t num_color>
-		void textureMapping(BoundingBox boundingBox, float(&color)[rows][columns][num_color], float(&depth)[rows][columns], glm::vec3 v0, glm::vec3 v1, glm::vec3 v2, int textureMode)
+		void textureMapping(BoundingBox boundingBox, float(&color)[rows][columns][num_color], float(&depth)[rows][columns], glm::vec4 v0, glm::vec4 v1, glm::vec4 v2, int textureMode)
 		{
 			switch (textureMode) {
 			case  0:
@@ -127,8 +209,8 @@ class Triangle {
 				textureNearest(boundingBox, color, depth, v0, v1, v2);
 				break;
 			case  1:
-				//linear
-				textureLinear(boundingBox, color, depth, v0, v1, v2);
+				//Bilinear
+				textureBilinear(boundingBox, color, depth, v0, v1, v2);
 				break;
 			case  2:
 				//mipmap
@@ -179,6 +261,9 @@ class Triangle {
 			gl_positionV2 = top * gl_positionV2;
 			//compute alpha beta gamma and check if between 0 and 1
 
+			//interpolate z for perspective
+
+
 			//convert back to vec3 by dividing by w coordinate
 			glm::vec3 v0(gl_positionV0 / gl_positionV0.w);
 			glm::vec3 v1(gl_positionV1 / gl_positionV1.w);
@@ -192,6 +277,6 @@ class Triangle {
 
 			BoundingBox boundingBox(_minY, _maxY, _minX, _maxX);
 			if (!isTextured) colorMapping(boundingBox, color, depth, v0, v1, v2);
-			else textureMapping(boundingBox, color, depth, v0, v1, v2, textureMode);
+			else textureMapping(boundingBox, color, depth, gl_positionV0, gl_positionV1, gl_positionV2, textureMode);
 		}
 };
