@@ -7,7 +7,7 @@
 #include <glm/glm.hpp>
 #define CLAMP(in, low, high) ((in) < (low) ? (low) : ((in) > (high) ? (high) : in))
 
-#define CLAMP(in, low, high) ((in) < (low) ? (low) : ((in) > (high) ? (high) : in))
+
 
 
 struct Baycentric {
@@ -103,6 +103,20 @@ class Triangle {
 			}
 
 		}
+
+		int Wrap(int in, int const lowerBound, int const upperBound) {
+			int range = upperBound - lowerBound + 1;
+			in = ((in - lowerBound) % range);
+			if (in < 0)
+				return upperBound + 1 + in;
+			else
+				return lowerBound + in;
+		}
+
+
+
+
+
 		template <size_t rows, size_t columns, size_t num_color>
 		void textureNearest(BoundingBox boundingBox, float(&color)[rows][columns][num_color], float(&depth)[rows][columns], glm::vec4 v0, glm::vec4 v1, glm::vec4 v2) {
 			
@@ -126,51 +140,37 @@ class Triangle {
 
 					//Baycentric texture = baycentricCoordinate(xCenter, yCenter, glm::vec3(v0), glm::vec3(v1), glm::vec3(v2));
 
+					
+					
 					if (pos.Inside()) {
 
 
 						float zInterpolate = screenSpace0.z * pos.alpha + screenSpace1.z * pos.beta + screenSpace2.z * pos.gamma;
 
-						
-
-						
-
 						if (zInterpolate <= depth[i][j]) {
 							
-							//float zScreenSpaceInterpolate = (1 / v0.z) * pos.alpha + (1 / v1.z) * pos.beta + (1 / v2.z) * pos.gamma;
-							float zScreenSpaceInterpolate = v0.z * pos.alpha + v1.z * pos.beta + v2.z * pos.gamma;
+							float zInverseInterpolate = (1 / v0.z) * pos.alpha + (1 / v1.z) * pos.beta + (1 / v2.z) * pos.gamma;
 
-							zScreenSpaceInterpolate = 1 / zScreenSpaceInterpolate;
 							
-							/*float uInverseInterpolate = (1 / this->t[0].x) * pos.alpha + (1 / this->t[1].x) * pos.beta + (1 / this->t[2].x) * pos.gamma;
-							float vInverseInterpolate = (1 / this->t[0].y) * pos.alpha + (1 / this->t[1].y) * pos.beta + (1 / this->t[2].y) * pos.gamma;*/
+							float uInterpolate = (this->t[0].x / v0.z) * pos.alpha + (this->t[1].x / v1.z) * pos.beta + (this->t[2].x / v2.z) * pos.gamma;
+							float vInterpolate = (this->t[0].y / v0.z) * pos.alpha + (this->t[1].y / v1.z) * pos.beta + (this->t[2].y / v2.z) * pos.gamma;
 
-							float uInverseInterpolate = this->t[0].x * pos.alpha + this->t[1].x * pos.beta + this->t[2].x * pos.gamma;
-							float vInverseInterpolate =  this->t[0].y * pos.alpha +  this->t[1].y * pos.beta +  this->t[2].y * pos.gamma;
-							uInverseInterpolate = 1 / uInverseInterpolate;
-							vInverseInterpolate = 1 / vInverseInterpolate;
+
 							
-							float u = uInverseInterpolate / zScreenSpaceInterpolate;
-							float v = vInverseInterpolate / zScreenSpaceInterpolate;
+							float uScalar = uInterpolate / zInverseInterpolate;
+							float vScalar = vInterpolate / zInverseInterpolate;
 
-							if (u > 1) {
-								u = u - 1;
-							}
-							if (v > 1) {
-								v = v - 1;
-							}
-							if (u < 0) {
-								u = 1 + u;
-							}
-							if (v < 0) {
-								v = 1 + v;
-							}
-							/*u = floor(u * columns);
-							v = floor(v * rows);*/
+							int u = floor(uScalar * texWidth);
+							int v = floor(vScalar * texHeight);
 
-							float r = texture[0][(int)v * texWidth * 3 + (int)u * 3 + 0];
-							float g = texture[0][(int)v * texWidth * 3 + (int)u * 3 + 1];
-							float b = texture[0][(int)v * texWidth * 3 + (int)u * 3 + 2];
+
+							u = Wrap(u, 0, texWidth-1);
+							v = Wrap(v, 0, texHeight-1);
+							
+
+							float r = texture[0][v * texWidth * 3 + u * 3 + 0];
+							float g = texture[0][v * texWidth * 3 + u * 3 + 1];
+							float b = texture[0][v * texWidth * 3 + u * 3 + 2];
 
 							color[i][j][0] = r;
 							color[i][j][1] = g;
