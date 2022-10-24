@@ -193,6 +193,93 @@ class Triangle {
 		template <size_t rows, size_t columns, size_t num_color>
 		void textureBilinear(BoundingBox boundingBox, float(&color)[rows][columns][num_color], float(&depth)[rows][columns], glm::vec4 v0, glm::vec4 v1, glm::vec4 v2) {
 
+			glm::vec3 screenSpace0(v0 / v0.w);
+			glm::vec3 screenSpace1(v1 / v1.w);
+			glm::vec3 screenSpace2(v2 / v2.w);
+			//x and y are u and v
+
+
+			for (int i = boundingBox.minY; i < boundingBox.maxY; i++) { //height y
+				for (int j = boundingBox.minX; j < boundingBox.maxX; j++) { //width x
+					//perform the inside test
+
+					//center of pixel
+					float xCenter = j + 0.5;
+					float yCenter = i + 0.5;
+					//calculate alpha beta and gamma
+
+
+					Baycentric pos = baycentricCoordinate(xCenter, yCenter, screenSpace0, screenSpace1, screenSpace2);
+
+					//Baycentric texture = baycentricCoordinate(xCenter, yCenter, glm::vec3(v0), glm::vec3(v1), glm::vec3(v2));
+
+
+
+					if (pos.Inside()) {
+
+
+						float zInterpolate = screenSpace0.z * pos.alpha + screenSpace1.z * pos.beta + screenSpace2.z * pos.gamma;
+
+						if (zInterpolate <= depth[i][j]) {
+
+							float zInverseInterpolate = (1 / v0.z) * pos.alpha + (1 / v1.z) * pos.beta + (1 / v2.z) * pos.gamma;
+
+
+							float uInterpolate = (this->t[0].x / v0.z) * pos.alpha + (this->t[1].x / v1.z) * pos.beta + (this->t[2].x / v2.z) * pos.gamma;
+							float vInterpolate = (this->t[0].y / v0.z) * pos.alpha + (this->t[1].y / v1.z) * pos.beta + (this->t[2].y / v2.z) * pos.gamma;
+
+
+
+							float uScalar = uInterpolate / zInverseInterpolate;
+							float vScalar = vInterpolate / zInverseInterpolate;
+
+
+							//before
+
+							//round u and v to determine the 4 nearest sample location
+							float uRight = round(uScalar) + 0.5;
+							float uLeft = round(uScalar) - 0.5;
+
+							float vUp = round(uScalar) + 0.5;
+							float vDown = round(uScalar) - 0.5;
+							
+							glm::vec2 u00 = glm::vec2(uLeft, vDown);
+							glm::vec2 u01 = glm::vec2(uLeft, vUp);
+							glm::vec2 u10 = glm::vec2(uRight, vDown);
+							glm::vec2 u11 = glm::vec2(uRight, vUp);
+
+
+							//interpolate helpers
+							glm::vec2 u0 = u00 + abs(uScalar - uLeft) * (u10 - u00);
+							glm::vec2 u1 = u01 + abs(uScalar - uLeft) * (u11 - u01);
+							//final interpolation
+							glm::vec2 pointVec = u0 + abs(vScalar-vDown) * (u1 - u0);
+
+
+							int u = pointVec.x * texWidth;
+							int v = pointVec.y * texHeight;
+
+
+							u = Wrap(u, 0, texWidth - 1);
+							v = Wrap(v, 0, texHeight - 1);
+
+
+							float r = texture[0][v * texWidth * 3 + u * 3 + 0];
+							float g = texture[0][v * texWidth * 3 + u * 3 + 1];
+							float b = texture[0][v * texWidth * 3 + u * 3 + 2];
+
+							color[i][j][0] = r;
+							color[i][j][1] = g;
+							color[i][j][2] = b;
+
+
+							depth[i][j] = zInterpolate;
+						}
+
+					}
+
+				}
+			}
 		}
 
 		template <size_t rows, size_t columns, size_t num_color>
