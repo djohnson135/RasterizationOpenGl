@@ -96,7 +96,7 @@ class Triangle {
 							color[i][j][2] = this->c[0].z * pos.alpha + this->c[1].z * pos.beta + this->c[2].z * pos.gamma;
 							depth[i][j] = zInterpolate;
 						}
-
+						
 					}
 
 				}
@@ -105,12 +105,16 @@ class Triangle {
 		}
 
 		int Wrap(int in, int const lowerBound, int const upperBound) {
-			int range = upperBound - lowerBound + 1;
+			/*int range = upperBound - lowerBound + 1;
 			in = ((in - lowerBound) % range);
 			if (in < 0)
 				return upperBound + 1 + in;
 			else
-				return lowerBound + in;
+				return lowerBound + in;*/
+
+			if (in > upperBound) return upperBound - in;
+			else if (in < lowerBound) return lowerBound - in;
+			else return in;
 		}
 
 
@@ -118,12 +122,12 @@ class Triangle {
 
 
 		template <size_t rows, size_t columns, size_t num_color>
-		void textureNearest(BoundingBox boundingBox, float(&color)[rows][columns][num_color], float(&depth)[rows][columns], glm::vec4 v0, glm::vec4 v1, glm::vec4 v2) {
+		void textureNearest(BoundingBox boundingBox, float(&color)[rows][columns][num_color], float(&depth)[rows][columns], glm::vec4 v0, glm::vec4 v1, glm::vec4 v2, glm::vec3 screenSpace0, glm::vec3 screenSpace1, glm::vec3 screenSpace2) {
 			
-			glm::vec3 screenSpace0(v0 / v0.w);
-			glm::vec3 screenSpace1(v1 / v1.w);
-			glm::vec3 screenSpace2(v2 / v2.w);
-			//x and y are u and v
+			//glm::vec3 screenSpace0(v0 / v0.w);
+			//glm::vec3 screenSpace1(v1 / v1.w);
+			//glm::vec3 screenSpace2(v2 / v2.w);
+			////x and y are u and v
 
 
 			for (int i = boundingBox.minY; i < boundingBox.maxY; i++) { //height y
@@ -184,14 +188,11 @@ class Triangle {
 
 				}
 			}
-
-
-
 			
 		}
 
 		template <size_t rows, size_t columns, size_t num_color>
-		void textureBilinear(BoundingBox boundingBox, float(&color)[rows][columns][num_color], float(&depth)[rows][columns], glm::vec4 v0, glm::vec4 v1, glm::vec4 v2) {
+		void textureBilinear(BoundingBox boundingBox, float(&color)[rows][columns][num_color], float(&depth)[rows][columns], glm::vec4 v0, glm::vec4 v1, glm::vec4 v2 ) {
 
 			glm::vec3 screenSpace0(v0 / v0.w);
 			glm::vec3 screenSpace1(v1 / v1.w);
@@ -240,8 +241,8 @@ class Triangle {
 							float uRight = round(uScalar) + 0.5;
 							float uLeft = round(uScalar) - 0.5;
 
-							float vUp = round(uScalar) + 0.5;
-							float vDown = round(uScalar) - 0.5;
+							float vUp = round(vScalar) + 0.5;
+							float vDown = round(vScalar) - 0.5;
 							
 							glm::vec2 u00 = glm::vec2(uLeft, vDown);
 							glm::vec2 u01 = glm::vec2(uLeft, vUp);
@@ -252,6 +253,8 @@ class Triangle {
 							//interpolate helpers
 							glm::vec2 u0 = u00 + abs(uScalar - uLeft) * (u10 - u00);
 							glm::vec2 u1 = u01 + abs(uScalar - uLeft) * (u11 - u01);
+							
+							
 							//final interpolation
 							glm::vec2 pointVec = u0 + abs(vScalar-vDown) * (u1 - u0);
 
@@ -288,12 +291,12 @@ class Triangle {
 		}
 
 		template <size_t rows, size_t columns, size_t num_color>
-		void textureMapping(BoundingBox boundingBox, float(&color)[rows][columns][num_color], float(&depth)[rows][columns], glm::vec4 v0, glm::vec4 v1, glm::vec4 v2, int textureMode)
+		void textureMapping(BoundingBox boundingBox, float(&color)[rows][columns][num_color], float(&depth)[rows][columns], glm::vec4 v0, glm::vec4 v1, glm::vec4 v2, int textureMode, glm::vec3 screenSpace0, glm::vec3 screenSpace1, glm::vec3 screenSpace2)
 		{
 			switch (textureMode) {
 			case  0:
 				//nearest
-				textureNearest(boundingBox, color, depth, v0, v1, v2);
+				textureNearest(boundingBox, color, depth, v0, v1, v2, screenSpace0, screenSpace1, screenSpace2);
 				break;
 			case  1:
 				//Bilinear
@@ -305,7 +308,7 @@ class Triangle {
 				break;
 			default:
 				//make nearest?
-				textureNearest(boundingBox, color, depth, v0, v1, v2);
+				textureNearest(boundingBox, color, depth, v0, v1, v2, screenSpace0, screenSpace1, screenSpace2);
 				break;
 			};
 
@@ -338,32 +341,53 @@ class Triangle {
 			top = top * projectionMatrix;
 			top = top * modelViewMatrix;
 
+
+			//perspective coordinate
+			glm::vec4 perspv0(this->v[0], 1);
+			glm::vec4 perspv1(this->v[1], 1);
+			glm::vec4 perspv2(this->v[2], 1);
+			perspv0 = modelViewMatrix * perspv0;
+			perspv1 = modelViewMatrix * perspv1;
+			perspv2 = modelViewMatrix * perspv2;
+
+
+
+
 			//homogenous coordinate
 			glm::vec4 gl_positionV0(this->v[0], 1);
 			glm::vec4 gl_positionV1(this->v[1], 1);
 			glm::vec4 gl_positionV2(this->v[2], 1);
 
+
+		
+
+
 			gl_positionV0 = top * gl_positionV0;
 			gl_positionV1 = top * gl_positionV1;
 			gl_positionV2 = top * gl_positionV2;
+
+
+			
+			
+		
 			//compute alpha beta gamma and check if between 0 and 1
 
 			//interpolate z for perspective
 
 
 			//convert back to vec3 by dividing by w coordinate
-			glm::vec3 v0(gl_positionV0 / gl_positionV0.w);
-			glm::vec3 v1(gl_positionV1 / gl_positionV1.w);
-			glm::vec3 v2(gl_positionV2 / gl_positionV2.w);
+			glm::vec3 screenSpace0(gl_positionV0 / gl_positionV0.w);
+			glm::vec3 screenSpace1(gl_positionV1 / gl_positionV1.w);
+			glm::vec3 screenSpace2(gl_positionV2 / gl_positionV2.w);
 
 			//maybe clamp later
-			int _minX = CLAMP(trunc(min(v0.x, v1.x, v2.x)), 0, WINDOW_WIDTH);
-			int _maxX = CLAMP(ceil(max(v0.x, v1.x, v2.x)), 0, WINDOW_WIDTH);
-			int _minY = CLAMP(trunc(min(v0.y, v1.y, v2.y)), 0, WINDOW_HEIGHT);
-			int _maxY = CLAMP(ceil(max(v0.y, v1.y, v2.y)), 0, WINDOW_HEIGHT);
+			int _minX = CLAMP(trunc(min(screenSpace0.x, screenSpace1.x, screenSpace2.x)), 0, WINDOW_WIDTH);
+			int _maxX = CLAMP(ceil(max(screenSpace0.x, screenSpace1.x, screenSpace2.x)), 0, WINDOW_WIDTH);
+			int _minY = CLAMP(trunc(min(screenSpace0.y, screenSpace1.y, screenSpace2.y)), 0, WINDOW_HEIGHT);
+			int _maxY = CLAMP(ceil(max(screenSpace0.y, screenSpace1.y, screenSpace2.y)), 0, WINDOW_HEIGHT);
 
 			BoundingBox boundingBox(_minY, _maxY, _minX, _maxX);
-			if (!isTextured) colorMapping(boundingBox, color, depth, v0, v1, v2);
-			else textureMapping(boundingBox, color, depth, gl_positionV0, gl_positionV1, gl_positionV2, textureMode);
+			if (!isTextured) colorMapping(boundingBox, color, depth, screenSpace0, screenSpace1, screenSpace2);
+			else textureMapping(boundingBox, color, depth, perspv0, perspv1, perspv2, textureMode, screenSpace0, screenSpace1, screenSpace2);
 		}
 };
