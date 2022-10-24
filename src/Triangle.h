@@ -192,11 +192,11 @@ class Triangle {
 		}
 
 		template <size_t rows, size_t columns, size_t num_color>
-		void textureBilinear(BoundingBox boundingBox, float(&color)[rows][columns][num_color], float(&depth)[rows][columns], glm::vec4 v0, glm::vec4 v1, glm::vec4 v2 ) {
+		void textureBilinear(BoundingBox boundingBox, float(&color)[rows][columns][num_color], float(&depth)[rows][columns], glm::vec4 v0, glm::vec4 v1, glm::vec4 v2, glm::vec3 screenSpace0, glm::vec3 screenSpace1, glm::vec3 screenSpace2) {
 
-			glm::vec3 screenSpace0(v0 / v0.w);
+			/*	glm::vec3 screenSpace0(v0 / v0.w);
 			glm::vec3 screenSpace1(v1 / v1.w);
-			glm::vec3 screenSpace2(v2 / v2.w);
+			glm::vec3 screenSpace2(v2 / v2.w);*/
 			//x and y are u and v
 
 
@@ -286,7 +286,7 @@ class Triangle {
 		}
 
 		template <size_t rows, size_t columns, size_t num_color>
-		void textureMipMap(BoundingBox boundingBox, float(&color)[rows][columns][num_color], float(&depth)[rows][columns], glm::vec4 v0, glm::vec4 v1, glm::vec4 v2) {
+		void textureMipMap(BoundingBox boundingBox, float(&color)[rows][columns][num_color], float(&depth)[rows][columns], glm::vec4 v0, glm::vec4 v1, glm::vec4 v2, glm::vec3 screenSpace0, glm::vec3 screenSpace1, glm::vec3 screenSpace2) {
 
 		}
 
@@ -300,11 +300,11 @@ class Triangle {
 				break;
 			case  1:
 				//Bilinear
-				textureBilinear(boundingBox, color, depth, v0, v1, v2);
+				textureBilinear(boundingBox, color, depth, v0, v1, v2, screenSpace0, screenSpace1, screenSpace2);
 				break;
 			case  2:
 				//mipmap
-				textureMipMap(boundingBox, color, depth, v0, v1, v2);
+				textureMipMap(boundingBox, color, depth, v0, v1, v2, screenSpace0, screenSpace1, screenSpace2);
 				break;
 			default:
 				//make nearest?
