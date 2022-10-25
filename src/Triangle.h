@@ -105,16 +105,16 @@ class Triangle {
 		}
 
 		int Wrap(int in, int const lowerBound, int const upperBound) {
-			/*int range = upperBound - lowerBound + 1;
+			int range = upperBound - lowerBound + 1;
 			in = ((in - lowerBound) % range);
 			if (in < 0)
 				return upperBound + 1 + in;
 			else
-				return lowerBound + in;*/
+				return lowerBound + in;
 
-			if (in > upperBound) return upperBound - in;
+			/*if (in > upperBound) return upperBound - in;
 			else if (in < lowerBound) return lowerBound - in;
-			else return in;
+			else return in;*/
 		}
 
 
@@ -191,6 +191,13 @@ class Triangle {
 			
 		}
 
+		/*glm::vec3 textureVector(int u, int v) {
+			float r = texture[0][v * texWidth * 3 + u * 3 + 0];
+			float g = texture[0][v * texWidth * 3 + u * 3 + 1];
+			float b = texture[0][v * texWidth * 3 + u * 3 + 2];
+			return glm::vec3(r, g, b);
+		}*/
+
 		template <size_t rows, size_t columns, size_t num_color>
 		void textureBilinear(BoundingBox boundingBox, float(&color)[rows][columns][num_color], float(&depth)[rows][columns], glm::vec4 v0, glm::vec4 v1, glm::vec4 v2, glm::vec3 screenSpace0, glm::vec3 screenSpace1, glm::vec3 screenSpace2) {
 
@@ -235,36 +242,135 @@ class Triangle {
 							float vScalar = vInterpolate / zInverseInterpolate;
 
 
-							//before
+							float u = uScalar * texWidth;
+							float v = vScalar * texHeight;
+
+							int centerU = round(u);
+							float scaleLengthU = u - (float)centerU + 0.5;
+							int centerV = round(v);
+							float scaleLengthV = v - (float)centerV + 0.5;
 
 							//round u and v to determine the 4 nearest sample location
-							float uRight = round(uScalar) + 0.5;
-							float uLeft = round(uScalar) - 0.5;
-
-							float vUp = round(vScalar) + 0.5;
-							float vDown = round(vScalar) - 0.5;
 							
-							glm::vec2 u00 = glm::vec2(uLeft, vDown);
-							glm::vec2 u01 = glm::vec2(uLeft, vUp);
-							glm::vec2 u10 = glm::vec2(uRight, vDown);
-							glm::vec2 u11 = glm::vec2(uRight, vUp);
+							int uRight = centerU + 1;
+							int uLeft = centerU - 1;
+
+							int vUp = centerV + 1;
+							int vDown = centerV - 1;
+							
+							uRight = Wrap(uRight, 0, texWidth - 1);
+							uLeft = Wrap(uLeft, 0, texWidth - 1);
+							vUp = Wrap(vUp, 0, texHeight - 1);
+							vDown = Wrap(vDown, 0, texHeight - 1);
+
+
+							
+							
+							float r = texture[0][vDown * texWidth * 3 + uLeft * 3 + 0];
+							float g = texture[0][vDown * texWidth * 3 + uLeft * 3 + 1];
+							float b = texture[0][vDown * texWidth * 3 + uLeft * 3 + 2];
+							glm::vec3 u00 = glm::vec3(r, g, b);
+
+
+
+							
+							r = texture[0][vUp * texWidth * 3 + uLeft * 3 + 0];
+							g = texture[0][vUp * texWidth * 3 + uLeft * 3 + 1];
+							b = texture[0][vUp * texWidth * 3 + uLeft * 3 + 2];
+							glm::vec3 u01 = glm::vec3(r, g, b);
+
+
+
+							r = texture[0][vDown * texWidth * 3 + uRight * 3 + 0];
+							g = texture[0][vDown * texWidth * 3 + uRight * 3 + 1];
+							b = texture[0][vDown * texWidth * 3 + uRight * 3 + 2];
+							glm::vec3 u10 = glm::vec3(r, g, b);
+
+
+							r = texture[0][vUp * texWidth * 3 + uRight * 3 + 0];
+							g = texture[0][vUp * texWidth * 3 + uRight * 3 + 1];
+							b = texture[0][vUp * texWidth * 3 + uRight * 3 + 2];
+							glm::vec3 u11 = glm::vec3(r, g, b);
 
 
 							//interpolate helpers
-							glm::vec2 u0 = u00 + abs(uScalar - uLeft) * (u10 - u00);
-							glm::vec2 u1 = u01 + abs(uScalar - uLeft) * (u11 - u01);
+							glm::vec3 u0 = u00 + (u10 - u00) * scaleLengthU;
+							glm::vec3 u1 = u01 + (u11 - u01) * scaleLengthU;
 							
 							
 							//final interpolation
-							glm::vec2 pointVec = u0 + abs(vScalar-vDown) * (u1 - u0);
+							glm::vec3 colorVec = u0 + (u1 - u0) * scaleLengthV;
 
 
-							int u = pointVec.x * texWidth;
-							int v = pointVec.y * texHeight;
+							color[i][j][0] = colorVec.x;
+							color[i][j][1] = colorVec.y;
+							color[i][j][2] = colorVec.z;
+
+
+							depth[i][j] = zInterpolate;
+						}
+
+					}
+
+				}
+			}
+		}
+
+		template <size_t rows, size_t columns, size_t num_color>
+		void textureMipMap(BoundingBox boundingBox, float(&color)[rows][columns][num_color], float(&depth)[rows][columns], glm::vec4 v0, glm::vec4 v1, glm::vec4 v2, glm::vec3 screenSpace0, glm::vec3 screenSpace1, glm::vec3 screenSpace2) {
+
+			for (int i = boundingBox.minY; i < boundingBox.maxY; i++) { //height y
+				for (int j = boundingBox.minX; j < boundingBox.maxX; j++) { //width x
+					//perform the inside test
+
+					//center of pixel
+					float xCenter = j + 0.5;
+					float yCenter = i + 0.5;
+					//calculate alpha beta and gamma
+
+
+					Baycentric pos = baycentricCoordinate(xCenter, yCenter, screenSpace0, screenSpace1, screenSpace2);
+
+					//Baycentric texture = baycentricCoordinate(xCenter, yCenter, glm::vec3(v0), glm::vec3(v1), glm::vec3(v2));
+
+
+
+					if (pos.Inside()) {
+
+
+						float zInterpolate = screenSpace0.z * pos.alpha + screenSpace1.z * pos.beta + screenSpace2.z * pos.gamma;
+
+						if (zInterpolate <= depth[i][j]) {
+
+							float zInverseInterpolate = (1 / v0.z) * pos.alpha + (1 / v1.z) * pos.beta + (1 / v2.z) * pos.gamma;
+
+
+							float uInterpolate = (this->t[0].x / v0.z) * pos.alpha + (this->t[1].x / v1.z) * pos.beta + (this->t[2].x / v2.z) * pos.gamma;
+							float vInterpolate = (this->t[0].y / v0.z) * pos.alpha + (this->t[1].y / v1.z) * pos.beta + (this->t[2].y / v2.z) * pos.gamma;
+
+							 
+							
+							
+							float uScalar = uInterpolate / zInverseInterpolate;
+							float vScalar = vInterpolate / zInverseInterpolate;
+
+
+							
+
+
+							int u = floor(uScalar * texWidth);
+							int v = floor(vScalar * texHeight);
+
+							//clamp L values to 1 and max levels. so 1 to 9
+							//calculate the scale
+
+							//float L = max(sqrt(), sqrt(1));
+
 
 
 							u = Wrap(u, 0, texWidth - 1);
 							v = Wrap(v, 0, texHeight - 1);
+
 
 
 							float r = texture[0][v * texWidth * 3 + u * 3 + 0];
@@ -283,10 +389,9 @@ class Triangle {
 
 				}
 			}
-		}
 
-		template <size_t rows, size_t columns, size_t num_color>
-		void textureMipMap(BoundingBox boundingBox, float(&color)[rows][columns][num_color], float(&depth)[rows][columns], glm::vec4 v0, glm::vec4 v1, glm::vec4 v2, glm::vec3 screenSpace0, glm::vec3 screenSpace1, glm::vec3 screenSpace2) {
+		
+
 
 		}
 
