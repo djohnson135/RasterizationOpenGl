@@ -242,21 +242,21 @@ class Triangle {
 							float vScalar = vInterpolate / zInverseInterpolate;
 
 
-							float u = uScalar * texWidth;
-							float v = vScalar * texHeight;
+							float u = uScalar * texWidth - 0.5;
+							float v = vScalar * texHeight - 0.5;
 
-							int centerU = round(u);
-							float scaleLengthU = u - (float)centerU + 0.5;
-							int centerV = round(v);
-							float scaleLengthV = v - (float)centerV + 0.5;
 
 							//round u and v to determine the 4 nearest sample location
 							
-							int uRight = centerU + 1;
-							int uLeft = centerU - 1;
+							int uRight = floor(u) + 1;
+							int uLeft = floor(u);
 
-							int vUp = centerV + 1;
-							int vDown = centerV - 1;
+							int vUp = floor(v) + 1;
+							int vDown = floor(v);
+
+							float scaleLengthU = u - uLeft;
+							float scaleLengthV = v - vDown;
+
 							
 							uRight = Wrap(uRight, 0, texWidth - 1);
 							uLeft = Wrap(uLeft, 0, texWidth - 1);
@@ -270,7 +270,6 @@ class Triangle {
 							float g = texture[0][vDown * texWidth * 3 + uLeft * 3 + 1];
 							float b = texture[0][vDown * texWidth * 3 + uLeft * 3 + 2];
 							glm::vec3 u00 = glm::vec3(r, g, b);
-
 
 
 							
