@@ -105,16 +105,11 @@ class Triangle {
 		}
 
 		int Wrap(int in, int const lowerBound, int const upperBound) {
-			int range = upperBound - lowerBound + 1;
-			in = ((in - lowerBound) % range);
-			if (in < 0)
-				return upperBound + 1 + in;
-			else
-				return lowerBound + in;
 
-			/*if (in > upperBound) return upperBound - in;
-			else if (in < lowerBound) return lowerBound - in;
-			else return in;*/
+			if (in > upperBound) return in - upperBound -1;//can do this because lowerbound is 0. Not normally correct.
+			else if (in < lowerBound) return in + upperBound +1; //can do this because lowerbound is 0. Not normally correct.
+			else return in;
+
 		}
 
 
