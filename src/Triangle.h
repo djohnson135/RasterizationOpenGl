@@ -124,10 +124,6 @@ class Triangle {
 		template <size_t rows, size_t columns, size_t num_color>
 		void textureNearest(BoundingBox boundingBox, float(&color)[rows][columns][num_color], float(&depth)[rows][columns], glm::vec4 v0, glm::vec4 v1, glm::vec4 v2, glm::vec3 screenSpace0, glm::vec3 screenSpace1, glm::vec3 screenSpace2) {
 			
-			//glm::vec3 screenSpace0(v0 / v0.w);
-			//glm::vec3 screenSpace1(v1 / v1.w);
-			//glm::vec3 screenSpace2(v2 / v2.w);
-			////x and y are u and v
 
 
 			for (int i = boundingBox.minY; i < boundingBox.maxY; i++) { //height y
@@ -198,13 +194,70 @@ class Triangle {
 			return glm::vec3(r, g, b);
 		}*/
 
+
+		template <typename T>
+		glm::vec3 bilinearMapping(float uScalar, float vScalar, int texWidth, int texHeight, T texture) {
+			float u = uScalar * texWidth - 0.5;
+			float v = vScalar * texHeight - 0.5;
+
+
+			//round u and v to determine the 4 nearest sample location
+
+			int uRight = floor(u) + 1;
+			int uLeft = floor(u);
+
+			int vUp = floor(v) + 1;
+			int vDown = floor(v);
+
+			float scaleLengthU = u - uLeft;
+			float scaleLengthV = v - vDown;
+
+
+			uRight = Wrap(uRight, 0, texWidth - 1);
+			uLeft = Wrap(uLeft, 0, texWidth - 1);
+			vUp = Wrap(vUp, 0, texHeight - 1);
+			vDown = Wrap(vDown, 0, texHeight - 1);
+
+
+			float r = texture[0][vDown * texWidth * 3 + uLeft * 3 + 0];
+			float g = texture[0][vDown * texWidth * 3 + uLeft * 3 + 1];
+			float b = texture[0][vDown * texWidth * 3 + uLeft * 3 + 2];
+			glm::vec3 u00 = glm::vec3(r, g, b);
+
+
+
+			r = texture[0][vUp * texWidth * 3 + uLeft * 3 + 0];
+			g = texture[0][vUp * texWidth * 3 + uLeft * 3 + 1];
+			b = texture[0][vUp * texWidth * 3 + uLeft * 3 + 2];
+			glm::vec3 u01 = glm::vec3(r, g, b);
+
+
+
+			r = texture[0][vDown * texWidth * 3 + uRight * 3 + 0];
+			g = texture[0][vDown * texWidth * 3 + uRight * 3 + 1];
+			b = texture[0][vDown * texWidth * 3 + uRight * 3 + 2];
+			glm::vec3 u10 = glm::vec3(r, g, b);
+
+
+			r = texture[0][vUp * texWidth * 3 + uRight * 3 + 0];
+			g = texture[0][vUp * texWidth * 3 + uRight * 3 + 1];
+			b = texture[0][vUp * texWidth * 3 + uRight * 3 + 2];
+			glm::vec3 u11 = glm::vec3(r, g, b);
+
+
+			//interpolate helpers
+			glm::vec3 u0 = u00 + (u10 - u00) * scaleLengthU;
+			glm::vec3 u1 = u01 + (u11 - u01) * scaleLengthU;
+
+
+			//final interpolation
+			glm::vec3 colorVec = u0 + (u1 - u0) * scaleLengthV;
+
+			return colorVec;
+		}
+
 		template <size_t rows, size_t columns, size_t num_color>
 		void textureBilinear(BoundingBox boundingBox, float(&color)[rows][columns][num_color], float(&depth)[rows][columns], glm::vec4 v0, glm::vec4 v1, glm::vec4 v2, glm::vec3 screenSpace0, glm::vec3 screenSpace1, glm::vec3 screenSpace2) {
-
-			/*	glm::vec3 screenSpace0(v0 / v0.w);
-			glm::vec3 screenSpace1(v1 / v1.w);
-			glm::vec3 screenSpace2(v2 / v2.w);*/
-			//x and y are u and v
 
 
 			for (int i = boundingBox.minY; i < boundingBox.maxY; i++) { //height y
@@ -218,9 +271,6 @@ class Triangle {
 
 
 					Baycentric pos = baycentricCoordinate(xCenter, yCenter, screenSpace0, screenSpace1, screenSpace2);
-
-					//Baycentric texture = baycentricCoordinate(xCenter, yCenter, glm::vec3(v0), glm::vec3(v1), glm::vec3(v2));
-
 
 
 					if (pos.Inside()) {
@@ -242,63 +292,7 @@ class Triangle {
 							float vScalar = vInterpolate / zInverseInterpolate;
 
 
-							float u = uScalar * texWidth - 0.5;
-							float v = vScalar * texHeight - 0.5;
-
-
-							//round u and v to determine the 4 nearest sample location
-							
-							int uRight = floor(u) + 1;
-							int uLeft = floor(u);
-
-							int vUp = floor(v) + 1;
-							int vDown = floor(v);
-
-							float scaleLengthU = u - uLeft;
-							float scaleLengthV = v - vDown;
-
-							
-							uRight = Wrap(uRight, 0, texWidth - 1);
-							uLeft = Wrap(uLeft, 0, texWidth - 1);
-							vUp = Wrap(vUp, 0, texHeight - 1);
-							vDown = Wrap(vDown, 0, texHeight - 1);
-
-
-							
-							
-							float r = texture[0][vDown * texWidth * 3 + uLeft * 3 + 0];
-							float g = texture[0][vDown * texWidth * 3 + uLeft * 3 + 1];
-							float b = texture[0][vDown * texWidth * 3 + uLeft * 3 + 2];
-							glm::vec3 u00 = glm::vec3(r, g, b);
-
-
-							
-							r = texture[0][vUp * texWidth * 3 + uLeft * 3 + 0];
-							g = texture[0][vUp * texWidth * 3 + uLeft * 3 + 1];
-							b = texture[0][vUp * texWidth * 3 + uLeft * 3 + 2];
-							glm::vec3 u01 = glm::vec3(r, g, b);
-
-
-
-							r = texture[0][vDown * texWidth * 3 + uRight * 3 + 0];
-							g = texture[0][vDown * texWidth * 3 + uRight * 3 + 1];
-							b = texture[0][vDown * texWidth * 3 + uRight * 3 + 2];
-							glm::vec3 u10 = glm::vec3(r, g, b);
-
-
-							r = texture[0][vUp * texWidth * 3 + uRight * 3 + 0];
-							g = texture[0][vUp * texWidth * 3 + uRight * 3 + 1];
-							b = texture[0][vUp * texWidth * 3 + uRight * 3 + 2];
-							glm::vec3 u11 = glm::vec3(r, g, b);
-
-
-							//interpolate helpers
-							glm::vec3 u0 = u00 + (u10 - u00) * scaleLengthU;
-							glm::vec3 u1 = u01 + (u11 - u01) * scaleLengthU;
-							
-							
-							//final interpolation
-							glm::vec3 colorVec = u0 + (u1 - u0) * scaleLengthV;
+							glm::vec3 colorVec = bilinearMapping(uScalar, vScalar, texWidth, texHeight, texture);
 
 
 							color[i][j][0] = colorVec.x;
