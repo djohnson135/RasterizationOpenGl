@@ -320,15 +320,14 @@ class Triangle {
 							float uInterpolate = (this->t[0].x / v0.z) * pos.alpha + (this->t[1].x / v1.z) * pos.beta + (this->t[2].x / v2.z) * pos.gamma;
 							float vInterpolate = (this->t[0].y / v0.z) * pos.alpha + (this->t[1].y / v1.z) * pos.beta + (this->t[2].y / v2.z) * pos.gamma;
 
-							 
-							
+							float xChange = (this->t[0].x + 1 / v0.z)* pos.alpha + (this->t[1].x + 1 / v1.z) * pos.beta + (this->t[2].x + 1 / v2.z) * pos.gamma;
+							float yChange = (this->t[0].y + 1 / v0.z) * pos.alpha + (this->t[1].y + 1 / v1.z) * pos.beta + (this->t[2].y + 1 / v2.z) * pos.gamma;
 							
 							float uScalar = uInterpolate / zInverseInterpolate;
 							float vScalar = vInterpolate / zInverseInterpolate;
 
-
-							
-
+							float changeInX = xChange / zInverseInterpolate;
+							float changeInY= yChange / zInverseInterpolate;
 
 							int u = floor(uScalar * texWidth);
 							int v = floor(vScalar * texHeight);
@@ -337,8 +336,8 @@ class Triangle {
 							//calculate the scale
 
 							//float L = max(sqrt(), sqrt(1));
-
-
+							int lScale = std::max(sqrt(changeInX * changeInX), sqrt(changeInY * changeInY));
+							float dResolution = log2(lScale);
 
 							u = Wrap(u, 0, texWidth - 1);
 							v = Wrap(v, 0, texHeight - 1);
