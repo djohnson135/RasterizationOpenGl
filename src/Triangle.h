@@ -343,6 +343,7 @@ class Triangle {
 		}
 
 
+
 		template <size_t rows, size_t columns, size_t num_color>
 		void textureMipMap(BoundingBox boundingBox, float(&color)[rows][columns][num_color], float(&depth)[rows][columns], glm::vec4 v0, glm::vec4 v1, glm::vec4 v2, glm::vec3 screenSpace0, glm::vec3 screenSpace1, glm::vec3 screenSpace2) {
 
@@ -359,7 +360,9 @@ class Triangle {
 					Baycentric pos = baycentricCoordinate(xCenter, yCenter, screenSpace0, screenSpace1, screenSpace2);
 
 					//Baycentric texture = baycentricCoordinate(xCenter, yCenter, glm::vec3(v0), glm::vec3(v1), glm::vec3(v2));
+					Baycentric xIncPos = baycentricCoordinate(xCenter + 1, yCenter, screenSpace0, screenSpace1, screenSpace2);
 
+					Baycentric yIncPos = baycentricCoordinate(xCenter, yCenter + 1, screenSpace0, screenSpace1, screenSpace2);
 
 
 					if (pos.Inside()) {
@@ -375,24 +378,37 @@ class Triangle {
 							float uInterpolate = (this->t[0].x / v0.z) * pos.alpha + (this->t[1].x / v1.z) * pos.beta + (this->t[2].x / v2.z) * pos.gamma;
 							float vInterpolate = (this->t[0].y / v0.z) * pos.alpha + (this->t[1].y / v1.z) * pos.beta + (this->t[2].y / v2.z) * pos.gamma;
 
-							float xChange = (this->t[0].x + 1 / v0.z)* pos.alpha + (this->t[1].x + 1 / v1.z) * pos.beta + (this->t[2].x + 1 / v2.z) * pos.gamma;
-							float yChange = (this->t[0].y + 1 / v0.z) * pos.alpha + (this->t[1].y + 1 / v1.z) * pos.beta + (this->t[2].y + 1 / v2.z) * pos.gamma;
+							float xIncPosX = (this->t[0].x / v0.z)* xIncPos.alpha + (this->t[1].x / v1.z) * xIncPos.beta + (this->t[2].x / v2.z) * xIncPos.gamma;
+							float xIncPosY = (this->t[0].y / v0.z) * xIncPos.alpha + (this->t[1].y/ v1.z) * xIncPos.beta + (this->t[2].y / v2.z) * xIncPos.gamma;
 							
+							float yIncPosX = (this->t[0].x / v0.z) * yIncPos.alpha + (this->t[1].x / v1.z) * yIncPos.beta + (this->t[2].x / v2.z) * yIncPos.gamma;
+							float yIncPosY = (this->t[0].y / v0.z) * yIncPos.alpha + (this->t[1].y / v1.z) * yIncPos.beta + (this->t[2].y / v2.z) * yIncPos.gamma;
+
 							float uScalar = uInterpolate / zInverseInterpolate;
 							float vScalar = vInterpolate / zInverseInterpolate;
 
-							float changeInX = xChange / zInverseInterpolate;
-							float changeInY= yChange / zInverseInterpolate;
+							float screenCoordU = uScalar * texWidth;
+							float screenCoordV = vScalar * texHeight;
 
-							//clamp L values to 1 and max levels. so 1 to 9
-							//calculate the scale
+							
+							float xIncChangeX = (xIncPosX / zInverseInterpolate) * texWidth;
+							float xIncChangeY = (xIncPosY / zInverseInterpolate) * texHeight;
 
-							//float L = max(sqrt(), sqrt(1));
-							int lScale = std::max(sqrt(changeInX * changeInX), sqrt(changeInY * changeInY));
+							float yIncChangeX = (yIncPosX / zInverseInterpolate) * texWidth;
+							float yIncChangeY = (yIncPosY / zInverseInterpolate) * texHeight;
+
+
+							float xChangeX = xIncChangeX - screenCoordU;
+							float xChangeY = xIncChangeY - screenCoordV;
+
+							float yChangeX = yIncChangeX - screenCoordU;
+							float yChangeY = yIncChangeY - screenCoordV;
+
+							float lScale = std::max(sqrt(xChangeX * xChangeX + xChangeY * xChangeY), sqrt(yChangeX * yChangeX + yChangeY * yChangeY));
 							float dResolution = log2(lScale);
 							
-							dResolution = CLAMP(dResolution, 0, 9);
-							
+							dResolution = CLAMP(dResolution, 0, 10);
+
 							int lowRes = floor(dResolution);
 							int highRes = ceil(dResolution);
 
