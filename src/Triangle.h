@@ -186,13 +186,13 @@ class Triangle {
 			}
 			
 		}
-
-		/*glm::vec3 textureVector(int u, int v) {
+		template <typename T>
+		glm::vec3 textureVector(int u, int v, int texWidth, T texture) {
 			float r = texture[0][v * texWidth * 3 + u * 3 + 0];
 			float g = texture[0][v * texWidth * 3 + u * 3 + 1];
 			float b = texture[0][v * texWidth * 3 + u * 3 + 2];
 			return glm::vec3(r, g, b);
-		}*/
+		}
 
 
 		template <typename T>
@@ -219,31 +219,10 @@ class Triangle {
 			vDown = Wrap(vDown, 0, texHeight - 1);
 
 
-			float r = texture[0][vDown * texWidth * 3 + uLeft * 3 + 0];
-			float g = texture[0][vDown * texWidth * 3 + uLeft * 3 + 1];
-			float b = texture[0][vDown * texWidth * 3 + uLeft * 3 + 2];
-			glm::vec3 u00 = glm::vec3(r, g, b);
-
-
-
-			r = texture[0][vUp * texWidth * 3 + uLeft * 3 + 0];
-			g = texture[0][vUp * texWidth * 3 + uLeft * 3 + 1];
-			b = texture[0][vUp * texWidth * 3 + uLeft * 3 + 2];
-			glm::vec3 u01 = glm::vec3(r, g, b);
-
-
-
-			r = texture[0][vDown * texWidth * 3 + uRight * 3 + 0];
-			g = texture[0][vDown * texWidth * 3 + uRight * 3 + 1];
-			b = texture[0][vDown * texWidth * 3 + uRight * 3 + 2];
-			glm::vec3 u10 = glm::vec3(r, g, b);
-
-
-			r = texture[0][vUp * texWidth * 3 + uRight * 3 + 0];
-			g = texture[0][vUp * texWidth * 3 + uRight * 3 + 1];
-			b = texture[0][vUp * texWidth * 3 + uRight * 3 + 2];
-			glm::vec3 u11 = glm::vec3(r, g, b);
-
+			glm::vec3 u00 = textureVector(uLeft, vDown, texWidth, texture);
+			glm::vec3 u01 = textureVector(uLeft, vUp, texWidth, texture);
+			glm::vec3 u10 = textureVector(uRight, vDown, texWidth, texture);
+			glm::vec3 u11 = textureVector(uRight, vUp, texWidth, texture);
 
 			//interpolate helpers
 			glm::vec3 u0 = u00 + (u10 - u00) * scaleLengthU;
